@@ -6,103 +6,69 @@
 using namespace std;
 
 #define INIT_CHILDREN   3
+#define FALSE -1;
 
-
+enum nodetype {p , q, leaf};
 
 //this will be the parent class for P-nodes, C-nodes and Q-nodes
+//on the reduction step will ensure that we have a valid PQ tree
 class Node{
+    protected:
+        Node* parent; //pointer to the parent node
+        list<Node*> children; //empty list of children
+        int value; //label for this node. generally only leaves will have labels
+        nodetype type;
     
-    Node* parent; //pointer to the parent node
     public:
-        enum nodetype {p , q, leaf};
-        Node(){ //default constructor
-            parent = NULL;
+        
+        Node(nodetype t, list<Node*> c, int v = 0, Node* par = NULL){ //default constructor
+            parent = par;
+            children = c;
+            value = v;
+            type = t;
+            if(t==q&&c.size()<3){ //trying to initialize a q-node
+                type = p;
+            }
         }
-        virtual nodetype type() = 0; //is this the right way to declare an abstract function?
         
-        virtual string print_details() = 0;
-        
-        string print(){
-            string result = "";
+        void print(){
             if(parent==NULL){
-                result.append("parent: NULL\n");
+                cout << "parent: NULL\n";
             }else{
-                result.append("parent: %d\n", (*parent).type());
+                cout << "parent: " << (*parent).get_type() << "\n";
             }
-            result.append("type: %d\n", type());
-            result.append(print_details());
-            return result;
-        }
-        
-        void link_child(Node *child){
             
-        }
-};
-
-//this will be the class for P-nodes
-class P: public Node{
-    list<Node*> children; //empty list of children
-    public:
-        nodetype type(){
-            return p;
-        }
-        
-        string print_details(){
-            list<Node*>::iterator it;
-            string result = "children: ";
-            for(it = children.begin(); it!= children.end(); ++it){
-                result.append((**it).print());
+            cout << "type: " << type << "\n";
+            list<Node*>::const_iterator it;
+            for(it = children.begin(); it != children.end(); ++it){
+                cout << "\nchildren";
+                cout << (*it);
             }
-            result.append("\n");
-            return result;
+        }
+        
+        nodetype get_type(){
+            return type;
         }
         
         
 };
 
-//this will be the class for Q-nodes
-class Q: public Node{
-    list<Node*> children; //empty list of children
-    public:
-        nodetype type(){
-            return q;
-        }
-        
-        void print_subtree(){
-            
-        }
-};
-
-//this will be the class for leafs
-class Leaf: public Node{
-    int value;
-    public:
-        nodetype type(){
-            return leaf;
-        }
-        Leaf(int v){
-            value = v;
-        }
-        void set_value(int v){
-            value = v;
-        }
-        int get_value(){
-            return value;
-        }
-};
 
 class PQTree{
     
 };
 
+//extend the functionality of the list class
+
 int main(){
-    cout << "Start of pq tree practice program!\n";
     
+    cout << "Start of pq tree practice program!\n";
+    list<Node*> children;
+    Node root(q, children); //try declaring a q node with less than 3 chidlren
+    root.print();
     //attempt building a bunch of pnodes
-    P root; //deafault constuctor for the p node
-    P a;
-    root.link_child(a);
-    cout << root.print();
+    children.insert()
+    
     return EXIT_SUCCESS; //indicates the the program ran successfully
 }
 
