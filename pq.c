@@ -15,6 +15,7 @@ a first attempt at implementing pq tree for testing graph planarity
 
 #define TRUE        1
 #define FALSE       0
+#define MAX_CHILD   10
 
 /*
  * 1. create p-nodes, q-nodes and c-nodes
@@ -28,9 +29,26 @@ a first attempt at implementing pq tree for testing graph planarity
  */
 
 struct node {
-    node *parent;
+    struct node *parent;
+    //currently this is an array. will later make a list....
+    int children[MAX_CHILD];
     int value;
 };
+
+//safe malloc function
+void* emalloc(int n){
+    void *p;
+    p = malloc(n);
+    if(p==NULL){
+        fprintf(stderr, "malloc of %u bytes failed", n);
+        exit(1);
+    }
+    return p;
+}
+
+new_node(){
+    
+}
 
 int main(){
     printf("start of program\n");
