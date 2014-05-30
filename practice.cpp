@@ -9,7 +9,9 @@
 
 //using namespace std; //never put this in the header file
 
-
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * Class Node
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 //this will be the parent class for P-nodes, C-nodes and Q-nodes
 //on the reduction step will ensure that we have a valid PQ tree
 Node::Node(){ //default constructor
@@ -47,7 +49,9 @@ int Node::get_depth(){ return depth; }
 nodetype Node::get_type(){ return type; }
 marking Node::get_mark(){ return mark; }
 
-
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * Class Leaf: public Node
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 Leaf::Leaf(int v): Node(), leaf_list_ptr(NULL){
     value = v;
     type = leafnode;
@@ -74,6 +78,10 @@ void Leaf::set_mark(marking m){ mark = m;}
 int Leaf::get_value(){ return value; }
 void Leaf::set_leaf_list_ptr(Leaf** ptr){ leaf_list_ptr = ptr; }
 Leaf** Leaf::get_leaf_list_ptr(){ return leaf_list_ptr; }
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * Class PQNode: public Node
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 PQnode::PQnode(){
     type = pnode;
@@ -110,11 +118,11 @@ void PQnode::print(){
     
 }
 
-void PQnode::add_leaves(std::list<Leaf*> &leaflist){
+void PQnode::add_leaves(std::list<Leaf*> &leaves){
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
         if(Leaf *lf = dynamic_cast<Leaf*>((*it))){ //if the child is a leaf
-            leaflist.push_back(lf);
-            lf->set_leaf_list_ptr(&leaflist.back());
+            leaves.push_back(lf);
+            lf->set_leaf_list_ptr(&leaves.back());
             std::cout << "leaf " << lf << " points to " << lf->get_leaf_list_ptr() << "\n" << std::endl;
         }
     }
@@ -169,6 +177,11 @@ bool PQnode::remove_child(int value){
     }
     return false;
 }
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * Class PQTree: public Node
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 PQTree::PQTree(){
     root = NULL;
