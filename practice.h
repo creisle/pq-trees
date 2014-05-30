@@ -35,18 +35,20 @@ class Leaf: public Node{
         void set_mark(marking m);
         int get_value();
         void set_leaf_list_ptr(Leaf** ptr);
+        Leaf** get_leaf_list_ptr();
 };
 
 
 class PQnode: public Node{
-    std::vector<Node*> children; //empty list of children
+    std::list<Node*> children; //empty list of children
     public:
         PQnode();
         virtual ~PQnode();
         PQnode(std::vector<int> leaves, nodetype t = pnode);
         void print();
-        void add_leaves(std::vector<Leaf*> &leaflist);
+        void add_leaves(std::list<Leaf*> &leaflist);
         int mark_node();
+        bool remove_child(int value);
 
 };
 
@@ -59,12 +61,13 @@ class PQnode: public Node{
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 class PQTree{
-    std::vector<Leaf*> leaflist; //list of the leaves for each given "value". first leaf in the list will
+    std::list<Leaf*> leaflist; //list of the leaves for each given "value". first leaf in the list will
     PQnode *root; //pointer to the root of the PQ tree
     
     public:
         PQTree();
         PQTree(std::vector<int> set);
+        virtual ~PQTree();
         //iterates recusively through the tree and prints out leaves and nodes
         void print();
         void reduce_on(int value);
@@ -72,6 +75,8 @@ class PQTree{
         void mark(int value);
         
         void print_leaflist();
+        
+        PQnode* get_root();
         
         
 };
