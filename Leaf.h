@@ -17,6 +17,8 @@ class Leaf: public Node{
         int get_value();
         void set_leaf_list_ptr(Leaf** ptr);
         Leaf** get_leaf_list_ptr();
+        void unmark();
+        void print_expression();
 };
 
 #endif

@@ -1,4 +1,8 @@
-/*
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * Class PQTree: public Node
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
  * Note: the leaflist list is referenced by other variables in the program. list nodes should
  * have the same ref throughout the program until they are destroyed
  * however if for some reason thier addr changes this would be a problem
@@ -7,13 +11,6 @@
 
 #include "PQTree.h"
 
-
-
-
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
- * Class PQTree: public Node
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 PQTree::PQTree(){
     root = NULL;
@@ -41,18 +38,35 @@ void PQTree::print(){
     }
 }
 
-/* procedure: reduce_on(int value)
+/* ***************************************************************************************
+ * procedure: reduce_on(int value)
  * purpose: marks the nodes as full or empty based on the given value
  * then applies the templates to enforce consecutive ordering of the nodes with this value
  * returns -1 if the reduciton step fails
  * returns 0 if the reduction step is successfull.
- */
-void PQTree::reduce_on(int value){
+ *****************************************************************************************/
+int PQTree::reduce_on(int value, std::vector<int> v){
+    PQnode* subroot = mark(value); //pertinent subroot
+    PQnode *temp = new PQnode(v);
+    temp->add_leaves(leaflist);
+    //current just replace 2
+    if(!subroot->replace_child(2, temp)){
+        return -1;
+    }
     
+    
+    //now unmark the tree. recurse down the tree from the pertinent subroot until you hit an empty node or a leaf
+    //subroot->unmark();
+    return 0;
 }
 
-//later make this method private so it can only be called from reduce
-void PQTree::mark(int value){
+
+/*******************************************************************************
+ * Function PQTree::mark(int value)
+ * purpose: marks the pertinent subtree
+ * returns the subroot of the pertinent subtree, otherwise NULL if an error occurs
+ ********************************************************************************/
+PQnode* PQTree::mark(int value){
     std::vector<Leaf*> fulls;
     
     //mark the full leaves based on the input value
@@ -111,11 +125,14 @@ void PQTree::mark(int value){
     }
     if(!partials.empty()){
         partials.front()->mark_node();
+        return partials.front();
     }
+    return NULL;
     
 }
 
 void PQTree::print_leaflist(){
+    printf("printing the leaflist .........\n");
     for(std::list<Leaf*>::iterator it=leaflist.begin(); it!=leaflist.end(); ++it){
         if((*it)!=NULL){
             (*it)->print();
@@ -124,6 +141,14 @@ void PQTree::print_leaflist(){
 }
 
 PQnode* PQTree::get_root(){ return root; }
+std::list<Leaf*>* PQTree::get_leaflist(){ return &leaflist; }
+
+void PQTree::print_expression(){
+    root->print_expression();
+    printf("\n");
+}
+
+
 
 //extend the functionality of the list class
 
@@ -132,18 +157,14 @@ int main(){
     std::cout << "Start of pq tree practice program!\n\n";
     int vec[] = {2, 3, 4};
     std::vector<int> v(vec, vec + sizeof(vec) / sizeof(int));
-    PQTree tree(v); //deafaults to a pnode
-    std::cout << "testing the remove method\n";
-    PQnode *temp = tree.get_root();
-    if(temp)
-        std::cout << "got the root\n";
-    temp->print();
-    temp->remove_child(3);
-    std::cout << "\n after removing the child the tree looks like ..... \n" << std::endl;
-    tree.print();
-    std::cout << "now printing the leaflist\n" << std::endl;
-    tree.print_leaflist();
-    
+    PQTree tree(v); //defaults to a pnode
+    v[0] = 5;
+    //test the reduction
+    tree.print_expression();
+    tree.reduce_on(2, v);
+    //tree.print();
+    //tree.print_leaflist();
+    tree.print_expression();
     return EXIT_SUCCESS; //indicates the the program ran successfully
 }
 

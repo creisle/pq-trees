@@ -18,14 +18,20 @@ class Node{
         int depth;
         nodetype type;
         marking mark;
+        
     public:
         Node();
         virtual ~Node(){} //destructor. use this to get rid of crap "new"'d inside the constructor
         virtual void print() = 0; //now this is pure virtual
         Node* get_parent();
-        int get_depth();
-        nodetype get_type();
-        marking get_mark();
+        int get_depth() const;
+        nodetype get_type() const;
+        marking get_mark() const;
+        virtual void unmark();
+        virtual void print_expression(){}
+        void set_parent(Node *p);
 };
+
+bool compare_marking(Node *first, Node *second);
 
 #endif

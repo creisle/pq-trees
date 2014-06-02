@@ -1,6 +1,6 @@
 
-#ifndef __PRACTICE_H
-#define __PRACTICE_H
+#ifndef __PQTree_H
+#define __PQTree_H
 
 //dependencies
 #include "PQnode.h"
@@ -18,23 +18,22 @@ class Node;
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 class PQTree{
-    std::list<Leaf*> leaflist; //list of the leaves for each given "value". first leaf in the list will
-    PQnode *root; //pointer to the root of the PQ tree
-    
+    private:
+        std::list<Leaf*> leaflist; //list of the leaves for each given "value". first leaf in the list will
+        PQnode *root; //pointer to the root of the PQ tree
     public:
         PQTree();
         PQTree(std::vector<int> set);
         virtual ~PQTree();
         //iterates recusively through the tree and prints out leaves and nodes
         void print();
-        void reduce_on(int value);
+        int reduce_on(int value, std::vector<int> v);
         //later make this method private so it can only be called from reduce
-        void mark(int value);
-        
+        PQnode* mark(int value);
+        std::list<Leaf*>* get_leaflist();
         void print_leaflist();
-        
         PQnode* get_root();
-        
+        void print_expression();
         
 };
 

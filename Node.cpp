@@ -37,6 +37,28 @@ void Node::print(){
         
 //getter funtions
 Node* Node::get_parent(){ return parent; }
-int Node::get_depth(){ return depth; }
-nodetype Node::get_type(){ return type; }
-marking Node::get_mark(){ return mark; }
+int Node::get_depth() const{ return depth; }
+nodetype Node::get_type() const{ return type; }
+marking Node::get_mark() const{ return mark; }
+void Node::unmark(){ mark = empty; }
+void Node::set_parent(Node *p){ parent = p; }
+
+//comparison to sort lists of marked nodes by marking so that they follow the form e...p...f
+bool compare_marking(Node *first, Node *second){
+    marking a = first->get_mark();
+    marking b = second->get_mark();
+    if(a==b){
+        return false;
+    }else if(b==full){ // b = full and a!=b
+        return true;
+    }else if(b==partial){ // b = partial and a!=b
+        if(a==full){
+            return false;
+        }else{
+            return true;
+        }
+    }else{ // b = empty, and a!=b
+        return false;
+    }
+}
+
