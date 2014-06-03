@@ -18,7 +18,13 @@ PQTree::PQTree(){
 
 PQTree::PQTree(std::string const expr){
     int i=0;
-    root = build_from_expr(expr, i);
+    if(PQnode *tmp = dynamic_cast<PQnode*>(build_from_expr(expr, i))){
+        root = tmp;
+    }else{
+        root = NULL;
+        fprintf(stderr, "cannot initialize a pq tree with an invalid expression\n");
+        exit(1);
+    }
 }
 
 PQTree::~PQTree(){
@@ -42,34 +48,50 @@ void PQTree::print(){
  * returns -1 if the reduciton step fails
  * returns 0 if the reduction step is successfull.
  *****************************************************************************************/
-int PQTree::reduce_on(int value, std::vector<int> v){
-    //print();
-    /*
+bool PQTree::reduce_on(int value, std::string const tree_in){
     PQnode* subroot = mark(value); //pertinent subroot
-    print_expression(true);
-    subroot->reduce();
-    PQnode *temp = new PQnode(v);
-    temp->add_leaves(leaflist);
-    //current just replace 2
-    if(!subroot->replace_child(2, temp)){
-        return -1;
-    }
-    //now reduce on 3
-    print_expression();
-    printf("re-mark with the value 3\n");
-    subroot->unmark();
-    printf("...\n");
-    subroot = mark(3);
-    //print();
-    print_expression(true);
-    if(!subroot){ printf("error in marking the subroot\n"); return -1; }
-    subroot->reduce();
-    printf("reduced tree.... \n");
-    print_expression(true);
-    //now unmark the tree. recurse down the tree from the pertinent subroot until you hit an empty node or a leaf
-    //subroot->unmark();*/
-    return 0;
+    if(subroot==NULL){ return false; }
+    if(!(subroot->reduce())){ return false; }
+    if(!replace_full_with(tree_in)){ return false; }
+    return true;
 }
+
+bool PQTree::replace_full_with(std::string const tree_in){
+    Node* parent = NULL;
+    std::list<Leaf*>::iterator it=leaflist.begin();
+    while(it!=leaflist.end()){
+        Leaf *lf = (*it);
+        if(lf!=NULL){
+            if(lf->get_mark()==full){
+                if(parent&&lf->get_parent()!=parent){
+                    fprintf(stderr, "not all full nodes have the same parent\n");
+                    return false;
+                }else{
+                    parent = lf->get_parent();
+                }
+            }
+            ++it;
+        }else{ //remove nulls from the leaflist
+            it = leaflist.erase(it);
+        }
+    }
+    if(PQnode* temp = dynamic_cast<PQnode*>(parent)){
+        int i = 0;
+        Node *child = build_from_expr(tree_in, i);
+        if(child==NULL){ return false; }
+        if(!(temp->condense_and_replace(child))){
+            fprintf(stderr, "condense failed\n");
+            return false;
+        }
+        if(temp->count_children()<3){
+            temp->set_type(pnode);
+        }
+        
+    }
+    return true;
+}
+
+
 
 /*******************************************************************************
  * Function PQTree::mark(int value)
@@ -77,8 +99,6 @@ int PQTree::reduce_on(int value, std::vector<int> v){
  * returns the subroot of the pertinent subtree, otherwise NULL if an error occurs
  ********************************************************************************/
 PQnode* PQTree::mark(int v){
-    printf("before marking ");
-    print_expression(true);
     std::vector<Leaf*> fulls;
     clean_leaflist();
     //mark the full leaves based on the input value
@@ -134,8 +154,8 @@ PQnode* PQTree::mark(int v){
         partials.front()->mark_node();
         return partials.front();
     }
-    printf("after marking ");
-    print_expression(true);
+    //printf("after marking ");
+    //print_expression(true);
     return NULL;
     
 }
@@ -175,11 +195,12 @@ void PQTree::clean_leaflist(){
 }
 
 //takes in a string expression of a pq-tree and builds the corresponding tree
-PQnode* PQTree::build_from_expr(std::string const expr, int &i){
+Node* PQTree::build_from_expr(std::string const expr, int &i){
     int state = 0;
     bool reading = true;
     bool isqnode = false;
     PQnode *rt = NULL;
+    Leaf *lf = NULL;
     
     while(reading&&i<expr.length()){
         switch(state){
@@ -199,7 +220,7 @@ PQnode* PQTree::build_from_expr(std::string const expr, int &i){
                 if(isspace(expr[i])){ //ignore whitespace
                     ++i;
                 }else if(expr[i]=='{'||expr[i]=='['){ //start the next pnode
-                    PQnode *child = build_from_expr(expr, i);
+                    Node *child = build_from_expr(expr, i);
                     rt->link_child(child);
                     ++i;
                 }else if(expr[i]=='}'||expr[i]==']'){
@@ -210,7 +231,7 @@ PQnode* PQTree::build_from_expr(std::string const expr, int &i){
                     while(expr[i]!=' '&&expr[i]!=']'&&expr[i]!='}'&&i<expr.length()){
                         num += expr[i++];
                     }
-                    Leaf *lf = new Leaf(rt, atoi(num.c_str()), leaflist);
+                    lf = new Leaf(rt, atoi(num.c_str()), leaflist);
                     rt->link_child(lf);
                 }
                 break;
@@ -219,8 +240,10 @@ PQnode* PQTree::build_from_expr(std::string const expr, int &i){
                 break;
         }
     }
-    if(isqnode){
+    if(isqnode&&rt->count_children()>2){
         rt->set_type(qnode);
+    }else if(rt->count_children()==1){
+        return lf;
     }
     return rt;
 }

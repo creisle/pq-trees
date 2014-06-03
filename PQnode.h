@@ -23,8 +23,6 @@ class PQnode: public Node{
     public:
         //constructors and deconstructor
         PQnode();
-        PQnode(std::vector<int> leaves, nodetype t = pnode);
-        PQnode(Node *p, std::vector<int> leaves, nodetype t = pnode);
         virtual ~PQnode();
         
         //utility functions for the children
@@ -36,11 +34,10 @@ class PQnode: public Node{
         
         
         //to do with the tree
-        void add_leaves(std::list<Leaf*> &leaflist);
         int mark_node();
         void unmark();
-        
-        bool link_child(Node *child);
+        bool condense_and_replace(Node *child);
+        bool link_child(Node *child); //DANGEROUS!
         void update_depth();
         
         

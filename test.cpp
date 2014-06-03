@@ -23,7 +23,36 @@ class Tests{
             tree.print_leaflist();
         }
         
-        static void test_leaflist(){
+        static bool test_planar(){
+            printf("TESTING: \n");
+            printf("purpose: tests a planar graph example\n");
+            
+            printf("adding node 1\n");
+            PQTree tree("{2 3 4 5 6}");
+            printf("EXPECT\t{ 2  3  4  5  6 }\nFOUND:\t");
+            tree.print_expression();
+            
+            printf("adding node 2\n");
+            if(!tree.reduce_on(2, "{3 6 7}")){ return false; }
+            printf("EXPECT:\t{ 3  4  5  6  { 3  6  7 } }\nFOUND:\t");
+            tree.print_expression();
+            
+            printf("adding node 3\n");
+            if(!tree.reduce_on(3, "{4 7}")){ return false; }
+            printf("EXPECT: { { { 6 7 } { 4 7 } } 4 5 6 }\t\nFOUND:\t");
+            tree.print_expression();
+            
+            printf("adding node 4\n");
+            if(!tree.reduce_on(4, "{5 7}")){ return false; }
+            printf("EXPECT:\t{ [ { 6 7 } 7 { 5 7 } ] 5 6 }\nFOUND:\t");
+            tree.print_expression();
+            
+            printf("adding node 5\n");
+            if(!tree.reduce_on(5, "{7}")){ return false; }
+            printf("EXPECT:\t{ }\nFOUND:\t");
+            tree.print_expression();
+            
+            return true;
         }
     
 };
@@ -39,7 +68,8 @@ int main(){
     //test the reduction
     tree.reduce_on(2, v);
     */
-    Tests::test_build_from_expr();
+    //Tests::test_build_from_expr();
+    Tests::test_planar();
     
     
     return EXIT_SUCCESS; //indicates the the program ran successfully

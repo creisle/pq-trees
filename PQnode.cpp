@@ -21,29 +21,6 @@ PQnode::~PQnode(){
     children.clear();
 }
 
-/* every new node should start with a set of leaves.should only link PQ nodes by replacing leaves in already existing nodes 
-PQnode::PQnode(std::vector<int> leaves, nodetype t){ //t default is pnode
-    if(test_leaks){ printf("PQNODE ++\n");}
-    parent = NULL;
-    depth = 0;
-    for(size_t i=0; i<leaves.size(); i++){
-        Leaf *temp = new Leaf(this, leaves[i]); // create the new leaf
-        children.push_back(temp); // add the new leaf to the set of children
-    }
-    type = (children.size()<3)? pnode: t; //if there are less than 3 children this is a pnode even if you try to declare a qnode
-}
-
-PQnode::PQnode(Node *p, std::vector<int> leaves, nodetype t){ // nodetype t= pnode
-    if(test_leaks){ printf("PQNODE ++\n");}
-    parent = p;
-    depth = 0;
-    for(size_t i=0; i<leaves.size(); i++){
-        Leaf *temp = new Leaf(this, leaves[i]); // create the new leaf
-        children.push_back(temp); // add the new leaf to the set of children
-    }
-    type = (children.size()<3)? pnode: t; //if there are less than 3 children this is a pnode even if you try to declare a qnode
-}*/
-
 void PQnode::print(){
     printf("+++++++++++++ node-type: %s  +++++++++++\n", (type==pnode)? "P": "Q");
     Node::print();
@@ -53,16 +30,6 @@ void PQnode::print(){
     }
     
 }
-
-/*
-void PQnode::add_leaves(std::list<Leaf*> &leaves){
-    for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
-        if(Leaf *lf = dynamic_cast<Leaf*>(*it)){ //if the child is a leaf
-            leaves.push_back(lf);
-            lf->set_leaf_list_ptr(&leaves.back());
-        }
-    }
-}*/
 
 //check the children in order to mark the node
 int PQnode::mark_node(){
@@ -102,7 +69,7 @@ bool PQnode::remove_child(int value){
         if(Leaf* lf = dynamic_cast<Leaf*>(*it)){
             if(lf->get_value()==value){
                 //children.remove(*it);
-                children.erase(it);
+                it = children.erase(it);
                 delete lf; //this will call lf's destructor
                 return true;
             }
@@ -111,14 +78,13 @@ bool PQnode::remove_child(int value){
     return false;
 }
 
-
 bool PQnode::replace_child(int value, Node *child){
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
         if(Leaf* lf = dynamic_cast<Leaf*>(*it)){
             if(lf->get_value()==value){
                 children.insert(it, child);
                 child->set_parent(this);
-                children.erase(it);
+                it = children.erase(it);
                 delete lf; //this will call lf's destructor
                 child->update_depth();
                 return true;
@@ -128,11 +94,9 @@ bool PQnode::replace_child(int value, Node *child){
     return false;
 }
 
-
 void PQnode::sort_children(){
     children.sort(compare_marking);
 }
-
 
 /*******************************************************************************
  * Function PQnode::unmark(PQnode* subroot)
@@ -185,7 +149,6 @@ void PQnode::print_expression(bool m/*false*/){
         printf("}");
     }
 }
-
 
 bool PQnode::reduce(){
     if(type==pnode){
@@ -323,7 +286,7 @@ bool PQnode::reduce_qroot(){
             }else{
                 return false;
             }
-            children.erase(it);
+            it = children.erase(it);
             children.insert(it, group_children(partials_list));
             delete ch;
             partials_list.clear();
@@ -352,7 +315,7 @@ bool PQnode::reduce_qroot(){
             }else{
                 return false;
             }
-            children.erase(it);
+            it = children.erase(it);
             children.insert(it, group_children(partials_list));
             delete ch;
             partials_list.clear();
@@ -368,9 +331,9 @@ bool PQnode::reduce_qroot(){
 //cannot use on the subroot
 //returns an error id any is unreducible
 bool PQnode::reduce(bool direction){
-    printf("before reducing the current node: ");
-    print_expression(true);
-    printf("\n");
+    //printf("before reducing the current node: ");
+    //print_expression(true);
+    //printf("\n");
     //create the lists
     std::list<Node*> empty_list;
     std::list<Node*> partials_list;
@@ -483,12 +446,14 @@ bool PQnode::link_child(Node *child){
 //recursive goes down the tree updating the depth parameter from the current node
 void PQnode::update_depth(){
     if(parent==NULL){
+        if(depth==0){ return; } //if this is correct, children will be correct
         depth = 0;
     }else{
+        if(depth==parent->get_depth()+1){ return; } //if this is correct, children will be correct
         depth = parent->get_depth() + 1;
-        for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
-            (*it)->update_depth();
-        }
+    }
+    for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
+        (*it)->update_depth();
     }
 }
 
@@ -515,4 +480,46 @@ void PQnode::set_type(nodetype t){
     }else{
         type = pnode;
     }
+}
+
+//only perform after the reduction, because full nodes must be together and belonging to the same node for this to work
+//only works if the node has only full leaves and no full nodes
+bool PQnode::condense_and_replace(Node *child){
+    //printf("condense_and_replace()\n");
+    if(child==NULL){
+        fprintf(stderr, "ERROR condense_and_replace: cannot replace with a null\n");
+        return false;
+    }
+    std::list<Node*>::iterator it=children.begin();
+    while(it!=children.end()){
+        if((*it)->get_mark()==full){
+            if(dynamic_cast<Leaf*>(*it)){
+                break;
+            }else{
+                fprintf(stderr, "ERROR: condense_leaves() - this node has full children that are not leaves\n");
+                return false;
+            }
+        }
+        ++it;
+    }
+    //found the first value. now delete all those after it with the same value
+    while(it!=children.end()){
+        if((*it)->get_mark()==full){
+            if(Leaf* lf = dynamic_cast<Leaf*>(*it)){
+                it = children.erase(it);
+                delete lf;
+            }else{
+                fprintf(stderr, "ERROR: condense_leaves() - this node has full children that are not leaves\n");
+                return false;
+            }
+        }else{
+            ++it;
+        }
+    }
+    //now the iterator is at the item just after the last full leaf
+    children.insert(it, child);
+    child->set_parent(this);
+    child->update_depth();
+    
+    return true;
 }

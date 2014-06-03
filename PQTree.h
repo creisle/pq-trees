@@ -21,9 +21,10 @@ class PQTree{
     private:
         std::list<Leaf*> leaflist; //list of the leaves for each given "value". first leaf in the list will
         PQnode *root; //pointer to the root of the PQ tree
-        PQnode* build_from_expr(std::string const expr, int &i);
+        Node* build_from_expr(std::string const expr, int &i);
         PQnode* mark(int value);
         void clean_leaflist();
+        bool replace_full_with(std::string const tree_in);
         
     public:
         PQTree();
@@ -36,7 +37,7 @@ class PQTree{
         void print_leaflist(bool detail = false); //prints the contents of the leaflist
         
         //reducion opertaions
-        int reduce_on(int value, std::vector<int> v);
+        bool reduce_on(int value, std::string const tree_in);
 };
 
 #endif

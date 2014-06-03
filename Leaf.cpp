@@ -7,14 +7,6 @@
 
 static bool test_leaks = false;
 
-/*
-Leaf::Leaf(Node *p, int v): Node(), leaf_list_ptr(NULL){
-    if(test_leaks){ printf("LEAF ++\n"); }
-    parent = p;
-    value = v;
-    depth = p->get_depth() +1;
-}*/
-
 Leaf::Leaf(Node *p, int v, std::list<Leaf*> &lflist): Node(){
     if(test_leaks){ printf("LEAF ++\n"); }
     parent = p;
@@ -23,6 +15,7 @@ Leaf::Leaf(Node *p, int v, std::list<Leaf*> &lflist): Node(){
     lflist.push_back(this);
     leaf_list_ptr = &lflist.back();
 }
+
 
 Leaf::~Leaf(){
     //follow pointer to the leaflist entry to null it's pointer
@@ -41,9 +34,6 @@ void Leaf::print(){
 }
 void Leaf::mark(){ node_mark = full;}
 int Leaf::get_value(){ return value; }
-//void Leaf::set_leaf_list_ptr(Leaf** ptr){ leaf_list_ptr = ptr; }
-//Leaf** Leaf::get_leaf_list_ptr(){ return leaf_list_ptr; }
-
 void Leaf::unmark(){ node_mark = empty; }
 
 void Leaf::print_expression(bool print_mark /*false*/){
