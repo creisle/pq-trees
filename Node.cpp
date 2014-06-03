@@ -32,6 +32,7 @@ void Node::print(){
             printf("mark: partial\n");
             break;
     }
+    printf("depth = %d\n", depth);
     
 }
         
@@ -61,4 +62,5 @@ bool compare_marking(Node *first, Node *second){
         return false;
     }
 }
+
 

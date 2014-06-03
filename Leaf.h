@@ -9,7 +9,6 @@ class Leaf: public Node{
     int value;
     Leaf **leaf_list_ptr;
     public:
-        Leaf(int v);
         Leaf(Node *p, int v);
         virtual ~Leaf();
         void print();
@@ -18,7 +17,8 @@ class Leaf: public Node{
         void set_leaf_list_ptr(Leaf** ptr);
         Leaf** get_leaf_list_ptr();
         void unmark();
-        void print_expression();
+        void print_expression(bool m = false);
+        void update_depth();
 };
 
 #endif

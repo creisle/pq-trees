@@ -33,8 +33,8 @@ class PQTree{
         std::list<Leaf*>* get_leaflist();
         void print_leaflist();
         PQnode* get_root();
-        void print_expression();
-        
+        void print_expression(bool mark = false);
+        void clean_leaflist();
 };
 
 #endif

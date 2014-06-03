@@ -6,15 +6,13 @@
 
 #include "PQnode.h"
 
-PQnode::PQnode(){
-    printf("PQNODE CONTRUCTOR ++\n");
+PQnode::PQnode(): Node(){
+    printf("PQNODE ++\n");
     type = pnode;
-    parent = NULL;
-    depth = 0;
 }
 
 PQnode::~PQnode(){
-    printf("PQNODE DESTRUCTOR --\n");
+    printf("PQNODE --\n");
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
         delete *it;
     }
@@ -24,7 +22,7 @@ PQnode::~PQnode(){
 /* every new node should start with a set of leaves.
  * should only link PQ nodes by replacing leaves in already existing nodes */
 PQnode::PQnode(std::vector<int> leaves, nodetype t/* = pnode*/){
-    printf("PQNODE CONTRUCTOR ++\n");
+    printf("PQNODE ++\n");
     parent = NULL;
     depth = 0;
     for(size_t i=0; i<leaves.size(); i++){
@@ -37,7 +35,7 @@ PQnode::PQnode(std::vector<int> leaves, nodetype t/* = pnode*/){
 /* every new node should start with a set of leaves.
  * should only link PQ nodes by replacing leaves in already existing nodes */
 PQnode::PQnode(Node *p, std::vector<int> leaves, nodetype t/* = pnode*/){
-    printf("PQNODE CONTRUCTOR ++\n");
+    printf("PQNODE ++\n");
     parent = p;
     depth = 0;
     for(size_t i=0; i<leaves.size(); i++){
@@ -122,6 +120,7 @@ bool PQnode::replace_child(int value, Node *child){
                 child->set_parent(this);
                 children.erase(it);
                 delete lf; //this will call lf's destructor
+                child->update_depth();
                 return true;
             }
         }
@@ -130,199 +129,9 @@ bool PQnode::replace_child(int value, Node *child){
 }
 
 
-/*********************************************************************************************************************
- * function reducable()
- * purpose: test if the current node is in a reducble form. if it is, then this performs the appropriate reduction
- * note: on an unmarked tree, all nodes are assumed to be empty.
- *********************************************************************************************************************/
-
-//will need to impose further restrictions if it is reducible
-//organize into e*...p...f*...p
-//means that we just have to move the last p to the end
-//turn this into a q-node
-//group all the e and f into p nodes....
-//f and p are restricted to being next to one another. but emptys can go  whereever. so don't make the parent a q node
-
-bool PQnode::subroot_p_reducible(){
-    sort_children();
-    int part = 0;
-    for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
-        if((*it)->get_mark()==partial){
-            part++;
-            if(part>2){
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool PQnode::subroot_q_reducible(){
-    std::list<Node*>::iterator it=children.begin();
-    int state = 0;
-    while(it!=children.end()){
-        switch(state){
-            case 0: //this is the default starting case
-                if((*it)->get_mark()==full){
-                    state = 2; ++it; 
-                }else if((*it)->get_mark()==partial){
-                    state = 3; ++it;
-                }else{ //assume empty
-                    state = 4; ++it;
-                }
-                break;
-            case 1: // f* ...
-                if((*it)->get_mark()==full){
-                    ++it; 
-                }else if((*it)->get_mark()==partial){
-                    state = 4; ++it;
-                }else{ //assume empty
-                    state = 4; ++it;
-                }
-                break;
-            case 2: // p ...
-                if((*it)->get_mark()==full){
-                    state = 1; ++it; 
-                }else if((*it)->get_mark()==partial){
-                    state = 4; ++it;
-                }else{ //assume empty
-                    state = 4; ++it;
-                }
-                break;
-            case 3: // e* ...
-                if((*it)->get_mark()==full){
-                    state = 1; ++it; 
-                }else if((*it)->get_mark()==partial){
-                    state = 2; ++it;
-                }else{ //assume empty
-                    ++it;
-                }
-                break;
-            case 4: // ... e*
-                if((*it)->get_mark()==full){
-                    return false; 
-                }else if((*it)->get_mark()==partial){
-                    return false;
-                }else{ //assume empty
-                    ++it;
-                }
-                break;
-            default: // if we end up here then an error occured, return false
-                return false;
-                break;
-        }
-    }
-    return true;
-}
-
-/***********************************************************************************************
- * function PQnode::q_reducible()
- * purpose: test a non-subroot node to see if it matching any of the allowed template structures
- * templates allowed: {e* p f*} or {f* p e*}
- * returns true if the node matches a valid template. false otherwise
- **********************************************************************************************/
-bool PQnode::q_reducible(){
-    std::list<Node*>::iterator it=children.begin();
-    int state = 0;
-    while(it!=children.end()){
-        switch(state){
-            case 0: //this is the default starting case
-                if((*it)->get_mark()==full){
-                    state = 1; ++it; 
-                }else if((*it)->get_mark()==partial){
-                    state = 2; ++it;
-                }else{ //assume empty
-                    state = 3; ++it;
-                }
-                break;
-            case 1: // f...
-                if((*it)->get_mark()==full){
-                    ++it; 
-                }else if((*it)->get_mark()==partial){
-                    state = 4; ++it;
-                }else{ //assume empty
-                    state = 5; ++it;
-                }
-                break;
-            case 2: // p...
-                if((*it)->get_mark()==full){
-                    state = 6; ++it; 
-                }else if((*it)->get_mark()==partial){
-                    return false;
-                }else{ //assume empty
-                    state = 5; ++it;
-                }
-                break;
-            case 3: // e...
-                if((*it)->get_mark()==full){
-                    state = 6; ++it; 
-                }else if((*it)->get_mark()==partial){
-                    state = 7; ++it;
-                }else{ //assume empty
-                    ++it;
-                }
-                break;
-            case 4: //looking for e
-                if((*it)->get_mark()==empty){
-                    state = 5; ++it; 
-                }else{ 
-                    return false;
-                }
-                break;
-            case 5: //looking for ... e*
-                if((*it)->get_mark()==empty){
-                    ++it; 
-                }else{
-                    return false;
-                }
-                break;
-            case 6: //looking for ... f*
-                if((*it)->get_mark()==full){
-                    ++it;
-                }else{ //assume empty
-                    return false;
-                }
-                break;
-            case 7: //looking for ... f
-                if((*it)->get_mark()==full){
-                    state = 6; ++it;
-                }else{ //assume empty
-                    return false;
-                }
-                break;
-            default: // if we end up here then an error occured, return false
-                return false;
-                break;
-        }
-    }
-    return true;
-}
-
-/***********************************************************************************************
- * function PQnode::q_reducible()
- * purpose: test a non-subroot node to see if it matching any of the allowed template structures
- * also sort the p-node
- * returns true if the node matches a valid template. false otherwise
- **********************************************************************************************/
-bool PQnode::p_reducible(){
-    //sort the p-node into empty...partial...full
-    sort_children();
-    bool part = false;
-    for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
-        if((*it)->get_mark()==partial){
-            if(part){
-                return false;
-            }
-            part = true;
-        }
-    }
-    return true;
-}
-
 void PQnode::sort_children(){
     children.sort(compare_marking);
 }
-
 
 
 /*******************************************************************************
@@ -343,7 +152,20 @@ void PQnode::unmark(){ //passes by ref
     }
 }
 
-void PQnode::print_expression(){
+void PQnode::print_expression(bool m/*false*/){
+    if(m){
+        switch(mark){
+            case full:
+                printf("f:");
+                break;
+            case empty:
+                printf("e:");
+                break;
+            case partial:
+                printf("p:");
+                break;
+        }
+    }
     if(type==qnode){
         printf("[");
     }else{
@@ -351,7 +173,7 @@ void PQnode::print_expression(){
     }
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
         printf(" ");
-        (*it)->print_expression();
+        (*it)->print_expression(m);
         printf(" ");
     }
     if(type==qnode){
@@ -362,7 +184,332 @@ void PQnode::print_expression(){
 }
 
 
+bool PQnode::reduce(){
+    if(type==pnode){
+        return reduce_proot();
+    }else{
+        //reduce_qroot();
+        return false;
+    }
+    update_depth();   
+}
 
+bool PQnode::reduce_proot(){
+    
+    std::list<Node*> empty_list;
+    std::list<Node*> partials_list;
+    std::list<Node*> sec_partials_list;
+    std::list<Node*> full_list; //temporary list to store directed node stuff
+    
+    sort_children();
+    std::list<Node*>::iterator it=children.begin();
+    while(it!=children.end()){ //find all the empty children
+        if((*it)->get_mark()==empty){
+            empty_list.push_back((*it));
+        }else{
+            break;
+        }
+        ++it;
+    }
+    
+    //deal with the first partial child
+    if(it!=children.end()){ //find all the partial children
+        PQnode *ch = dynamic_cast<PQnode*>(*it);
+        if(ch&&(*it)->get_mark()==partial){
+            //add all the children of the node lower than this one
+            if(ch->reduce(true)){
+                Node *temp = ch->pop_child();
+                while(temp!=NULL){
+                    partials_list.push_back(temp);
+                    temp = ch->pop_child();
+                }
+            }else{
+                return false;
+            }
+            ++it;
+        } 
+    }
+    
+    //if there is another partial node. deal with it here but pass the opposite direction
+    if(it!=children.end()){ //find all the partial children
+        PQnode *ch = dynamic_cast<PQnode*>(*it);
+        if(ch&&(*it)->get_mark()==partial){
+            //add all the children of the node lower than this one
+            if(ch->reduce(false)){ //important! this makes the node group to the left
+                Node *temp = ch->pop_child();
+                while(temp!=NULL){
+                    sec_partials_list.push_back(temp);
+                    temp = ch->pop_child();
+                }
+            }else{
+                return false;
+            }
+            ++it;
+        }
+    }
+    
+    //deal with the full nodes
+    while(it!=children.end()){ //find all the full children
+        if((*it)->get_mark()==full){
+            full_list.push_back((*it));
+        }else{
+            return false;
+        }
+        ++it;
+    }    
+    
+    
+    children.clear();
+    children.splice(children.end(), empty_list);//add the empty nodes back (still have the same parent)
+    
+    if(partials_list.empty()){ //no partial children
+        link_child(group_children(full_list));
+        return true;
+    }
+    //create the new qnode to house the full and partial children
+    PQnode *qtemp = new PQnode();
+    
+    for(it=partials_list.begin(); it!=partials_list.end(); ++it){
+        qtemp->link_child((*it));
+    }
+    partials_list.clear();
+    
+    //group the full nodes into a qnode with the partials
+    qtemp->link_child(group_children(full_list));
+    
+    //if there is another partial child, add it here
+    for(it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it){
+        qtemp->link_child((*it));
+    }
+    sec_partials_list.clear();
+    
+    qtemp->set_type(qnode);
+    
+    //link the qnode to the parent node
+    qtemp->mark_node();
+    link_child(qtemp);
+    
+    return true;
+    
+}
 
+//check if the tree is reducible during the marking phase. will save a lot of headache
+bool PQnode::reduce_qroot(){
+    //should be of the form e* p f* p e*
+    std::list<Node*> partials_list;
+    std::list<Node*>::iterator it=children.begin();
+    while(it!=children.end()){ //skip the empty nodes
+        if((*it)->get_mark()!=empty){
+            break;
+        }else{
+            ++it;
+        }
+    }
+    //first potential partial node
+    if(it!=children.end()){
+        PQnode *ch = dynamic_cast<PQnode*>(*it);
+        if(ch&&(*it)->get_mark()==partial){
+            //recursively deal with partial node
+            //add all the children of the node lower than this one
+            if(ch->reduce(true)){
+                Node *temp = ch->pop_child();
+                while(temp!=NULL){
+                    partials_list.push_back(temp);
+                    temp = ch->pop_child();
+                }
+            }else{
+                return false;
+            }
+            children.erase(it);
+            children.insert(it, group_children(partials_list));
+            delete ch;
+            partials_list.clear();
+            ++it;
+        }
+    }
+    //skip the middle full nodes
+    while(it!=children.end()){
+        if((*it)->get_mark()!=empty){
+            break;
+        }else{
+            ++it;
+        }
+    }
+    
+    //next potential partial node
+    if(it!=children.end()){
+        PQnode *ch = dynamic_cast<PQnode*>(*it);
+        if(ch&&(*it)->get_mark()==partial){
+            if(ch->reduce(false)){
+                Node *temp = ch->pop_child();
+                while(temp!=NULL){
+                    partials_list.push_back(temp);
+                    temp = ch->pop_child();
+                }
+            }else{
+                return false;
+            }
+            children.erase(it);
+            children.insert(it, group_children(partials_list));
+            delete ch;
+            partials_list.clear();
+        }
+    }
+    return true;
+}
 
+//node direction is true = right, left = false
+//for a partial node and returns it's children as a list
+//if this is not a partial node. returns an error
+//will not change the leaflist at all
+//cannot use on the subroot
+//returns an error id any is unreducible
+bool PQnode::reduce(bool direction){
+    printf("before reducing the current node: ");
+    print_expression(true);
+    printf("\n");
+    //create the lists
+    std::list<Node*> empty_list;
+    std::list<Node*> partials_list;
+    std::list<Node*> full_list; //temporary list to store directed node stuff
+    
+    if(type==pnode){ //if a p node. call ordering funciton
+        sort_children();
+    }else{ //if qnode, don't. but can reverse to ensure empty children are at the head of the list
+        if(!children.empty()){
+            if(children.front()->get_mark()!=empty){
+                children.reverse();
+            }
+        }
+    }
+    
+    std::list<Node*>::iterator it=children.begin();
+    //it!=children.end(); ++it;
+    while(it!=children.end()){ //find all the empty children
+        if((*it)->get_mark()==empty){
+            empty_list.push_back((*it));
+        }else{
+            break;
+        }
+        ++it;
+    }
+    
+    if(it!=children.end()){ //find all the partial children
+        PQnode *ch = dynamic_cast<PQnode*>(*it);
+        if(ch&&(*it)->get_mark()==partial){
+            //recurse
+            //add all the children of the node lower than this one
+            if(ch->reduce(direction)){
+                Node *temp = ch->pop_child();
+                while(temp!=NULL){
+                    partials_list.push_back(temp);
+                    temp = ch->pop_child();
+                }
+            }else{
+                return false;
+            }
+            ++it;
+        } 
+    }
+    
+    while(it!=children.end()){ //find all the full children
+        if((*it)->get_mark()==full){
+            full_list.push_back((*it));
+        }else{
+            return false;
+        }
+        ++it;
+    }
+        
+    children.clear(); //remove so we can add back in in the right order after the merging
+    
+    //now group the children from the empty list into a pnode if necessary (more than 2)
+    link_child(group_children(empty_list));
+    
+    if(!partials_list.empty()){
+        //now deal with the partial node children
+        for(it=partials_list.begin(); it!=partials_list.end(); ++it){
+            link_child(*it);
+        }
+        partials_list.clear();
+    }
+    
+    //now finally the full node children. again you need to group them
+    link_child(group_children(full_list));
+    
+    set_type(qnode);
+    
+    return true;
+}
 
+//groups all the elements in a given list into a single pnode and returns the node
+//also clears the list
+Node* PQnode::group_children(std::list<Node*> group){
+    Node *result = NULL;
+    if(group.empty()){
+        return result;
+    }else if(group.size()==1){
+        result = group.front();
+    }else{
+        PQnode *temp = new PQnode();
+        for(std::list<Node*>::iterator it=group.begin(); it!=group.end(); ++it){
+            temp->link_child(*it);
+        }
+        temp->mark_node();
+        result = temp;
+    }
+    group.clear();
+    return result;
+}
+
+//linking a new child should only be done if said child is already part of the tree.
+//otherwise you need to update the leaf list
+//returns false if an error occurred. i.e. you try adding a node without a parent.
+//i.e. not part of the tree
+bool PQnode::link_child(Node *child){
+    //need to link the new child
+    if(child==NULL){
+        return false;
+    }
+    child->set_parent(this);
+    children.push_back(child);
+    child->update_depth();
+    return true;
+}
+
+//recursive goes down the tree updating the depth parameter from the current node
+void PQnode::update_depth(){
+    if(parent==NULL){
+        depth = 0;
+    }else{
+        depth = parent->get_depth() + 1;
+        for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
+            (*it)->update_depth();
+        }
+    }
+}
+
+//removes and returns the first child from a given node
+//returns null when there are no children left
+Node* PQnode::pop_child(){
+    if(children.empty()){
+        return NULL;
+    }else{
+        Node *temp = children.front();
+        children.pop_front();
+        temp->set_parent(NULL);
+        return temp;
+    }
+}
+
+int PQnode::count_children(){
+    return children.size(); 
+}
+
+void PQnode::set_type(nodetype t){
+    if(t==qnode&&count_children()>2){
+        type = qnode;
+    }else{
+        type = pnode;
+    }
+}

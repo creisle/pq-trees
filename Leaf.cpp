@@ -5,23 +5,18 @@
 
 #include "Leaf.h"
 
-Leaf::Leaf(int v): Node(), leaf_list_ptr(NULL){
-    printf("LEAF CONTRUCTOR ++\n");
-    value = v;
-    type = leafnode;
-}
-Leaf::Leaf(Node *p, int v): leaf_list_ptr(NULL){
-    printf("LEAF CONTRUCTOR ++\n");
+Leaf::Leaf(Node *p, int v): Node(), leaf_list_ptr(NULL){
+    printf("LEAF ++\n");
     parent = p;
     value = v;
     depth = p->get_depth() +1;
     type = leafnode;
+    mark = empty;
 }
 
 Leaf::~Leaf(){
     //follow pointer to the leaflist entry to null it's pointer
-    printf("LEAF DESTRUCTOR -- \n");
-    printf("value = %d\n", value);
+    printf("LEAF -- \n");
     if(leaf_list_ptr!=NULL){
         *leaf_list_ptr = NULL;
         leaf_list_ptr = NULL;
@@ -41,6 +36,29 @@ Leaf** Leaf::get_leaf_list_ptr(){ return leaf_list_ptr; }
 
 void Leaf::unmark(){ mark = empty; }
 
-void Leaf::print_expression(){
+void Leaf::print_expression(bool m /*false*/){
+    if(m){
+        switch(mark){
+            case full:
+                printf("f:");
+                break;
+            case partial:
+                printf("p:");
+                break;
+            default:
+                printf("e:");
+                break;
+        }
+    }
     printf("%d", value);
 }
+
+void Leaf::update_depth(){
+    if(parent==NULL){
+        depth = 0;
+    }else{
+        depth = parent->get_depth() + 1;
+    }
+}
+
+
