@@ -9,7 +9,7 @@
 Node::Node(){ //default constructor
     parent = NULL;
     depth = 0;
-    mark = empty;
+    node_mark = empty;
 }
 
 //this procedure is just for testing purposes
@@ -21,7 +21,7 @@ void Node::print(){
     }else{
         printf("parent addr: %p \n", parent);
     }
-    switch(mark){
+    switch(node_mark){
         case full:
             printf("mark: full\n");
             break;
@@ -40,8 +40,8 @@ void Node::print(){
 Node* Node::get_parent(){ return parent; }
 int Node::get_depth() const{ return depth; }
 nodetype Node::get_type() const{ return type; }
-marking Node::get_mark() const{ return mark; }
-void Node::unmark(){ mark = empty; }
+marking Node::get_mark() const{ return node_mark; }
+void Node::unmark(){ node_mark = empty; }
 void Node::set_parent(Node *p){ parent = p; }
 
 //comparison to sort lists of marked nodes by marking so that they follow the form e...p...f

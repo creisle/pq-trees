@@ -6,23 +6,24 @@
 
 #include "PQnode.h"
 
+static bool test_leaks = false;
+
 PQnode::PQnode(): Node(){
-    printf("PQNODE ++\n");
+    if(test_leaks){ printf("PQNODE ++\n");}
     type = pnode;
 }
 
 PQnode::~PQnode(){
-    printf("PQNODE --\n");
+    if(test_leaks){ printf("PQNODE --\n");}
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
         delete *it;
     }
     children.clear();
 }
 
-/* every new node should start with a set of leaves.
- * should only link PQ nodes by replacing leaves in already existing nodes */
-PQnode::PQnode(std::vector<int> leaves, nodetype t/* = pnode*/){
-    printf("PQNODE ++\n");
+/* every new node should start with a set of leaves.should only link PQ nodes by replacing leaves in already existing nodes 
+PQnode::PQnode(std::vector<int> leaves, nodetype t){ //t default is pnode
+    if(test_leaks){ printf("PQNODE ++\n");}
     parent = NULL;
     depth = 0;
     for(size_t i=0; i<leaves.size(); i++){
@@ -32,10 +33,8 @@ PQnode::PQnode(std::vector<int> leaves, nodetype t/* = pnode*/){
     type = (children.size()<3)? pnode: t; //if there are less than 3 children this is a pnode even if you try to declare a qnode
 }
 
-/* every new node should start with a set of leaves.
- * should only link PQ nodes by replacing leaves in already existing nodes */
-PQnode::PQnode(Node *p, std::vector<int> leaves, nodetype t/* = pnode*/){
-    printf("PQNODE ++\n");
+PQnode::PQnode(Node *p, std::vector<int> leaves, nodetype t){ // nodetype t= pnode
+    if(test_leaks){ printf("PQNODE ++\n");}
     parent = p;
     depth = 0;
     for(size_t i=0; i<leaves.size(); i++){
@@ -43,7 +42,7 @@ PQnode::PQnode(Node *p, std::vector<int> leaves, nodetype t/* = pnode*/){
         children.push_back(temp); // add the new leaf to the set of children
     }
     type = (children.size()<3)? pnode: t; //if there are less than 3 children this is a pnode even if you try to declare a qnode
-}
+}*/
 
 void PQnode::print(){
     printf("+++++++++++++ node-type: %s  +++++++++++\n", (type==pnode)? "P": "Q");
@@ -55,6 +54,7 @@ void PQnode::print(){
     
 }
 
+/*
 void PQnode::add_leaves(std::list<Leaf*> &leaves){
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
         if(Leaf *lf = dynamic_cast<Leaf*>(*it)){ //if the child is a leaf
@@ -62,7 +62,7 @@ void PQnode::add_leaves(std::list<Leaf*> &leaves){
             lf->set_leaf_list_ptr(&leaves.back());
         }
     }
-}
+}*/
 
 //check the children in order to mark the node
 int PQnode::mark_node(){
@@ -84,15 +84,15 @@ int PQnode::mark_node(){
         }
     }
     if(pcount>0){
-        mark = partial;
+        node_mark = partial;
     }else if(fcount>0){
         if(fcount<children.size()){
-            mark = partial;
+            node_mark = partial;
         }else{
-            mark = full;
+            node_mark = full;
         }
     }else{
-        mark = empty;
+        node_mark = empty;
     }
     return 0;
 }
@@ -141,7 +141,10 @@ void PQnode::sort_children(){
  ********************************************************************************/
 void PQnode::unmark(){ //passes by ref
     //mark the node as empty
-    mark = empty;
+    if(node_mark==empty){
+        return;
+    }
+    node_mark = empty;
     //recurse by children, if they are not empty
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
         if(PQnode *p = dynamic_cast<PQnode*>(*it)){
@@ -154,7 +157,7 @@ void PQnode::unmark(){ //passes by ref
 
 void PQnode::print_expression(bool m/*false*/){
     if(m){
-        switch(mark){
+        switch(node_mark){
             case full:
                 printf("f:");
                 break;

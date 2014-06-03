@@ -16,11 +16,9 @@ PQTree::PQTree(){
     root = NULL;
 }
 
-// non-default constructor will build a universal tree,
-// i.e. p-node from a given set of input values
-PQTree::PQTree(std::vector<int> set){
-    root = new PQnode(set);
-    root->add_leaves(leaflist);//add the new leaves to the leaflist... 
+PQTree::PQTree(std::string const expr){
+    int i=0;
+    root = build_from_expr(expr, i);
 }
 
 PQTree::~PQTree(){
@@ -46,6 +44,7 @@ void PQTree::print(){
  *****************************************************************************************/
 int PQTree::reduce_on(int value, std::vector<int> v){
     //print();
+    /*
     PQnode* subroot = mark(value); //pertinent subroot
     print_expression(true);
     subroot->reduce();
@@ -68,7 +67,7 @@ int PQTree::reduce_on(int value, std::vector<int> v){
     printf("reduced tree.... \n");
     print_expression(true);
     //now unmark the tree. recurse down the tree from the pertinent subroot until you hit an empty node or a leaf
-    //subroot->unmark();
+    //subroot->unmark();*/
     return 0;
 }
 
@@ -85,7 +84,7 @@ PQnode* PQTree::mark(int v){
     //mark the full leaves based on the input value
     for(std::list<Leaf*>::iterator it=leaflist.begin(); it!=leaflist.end(); ++it){
         if((*it)->get_value()==v){
-            (*it)->set_mark(full);
+            (*it)->mark();
             fulls.push_back((*it));
         }
     }
@@ -141,19 +140,29 @@ PQnode* PQTree::mark(int v){
     
 }
 
-void PQTree::print_leaflist(){
-    printf("printing the leaflist .........\n");
+void PQTree::print_leaflist(bool detail/*false*/){
+    if(detail){
+        printf("printing the leaflist .........\n");
+        for(std::list<Leaf*>::iterator it=leaflist.begin(); it!=leaflist.end(); ++it){
+            if((*it)!=NULL){
+                (*it)->print();
+            }else{
+                printf("NULL\n");
+            }
+        }
+        return;
+    }
+    
     for(std::list<Leaf*>::iterator it=leaflist.begin(); it!=leaflist.end(); ++it){
         if((*it)!=NULL){
-            (*it)->print();
+            printf("%d ", (*it)->get_value());
         }else{
-            printf("NULL\n");
+            printf("NULL ");
         }
     }
+    printf("\n");
+    
 }
-
-PQnode* PQTree::get_root(){ return root; }
-std::list<Leaf*>* PQTree::get_leaflist(){ return &leaflist; }
 
 //prints an expression that represents the current tree. {} are p nodes, [] are qnodes
 void PQTree::print_expression(bool mark/*false*/){
@@ -165,23 +174,56 @@ void PQTree::clean_leaflist(){
     leaflist.remove(NULL);
 }
 
-//extend the functionality of the list class
-
-int main(){
+//takes in a string expression of a pq-tree and builds the corresponding tree
+PQnode* PQTree::build_from_expr(std::string const expr, int &i){
+    int state = 0;
+    bool reading = true;
+    bool isqnode = false;
+    PQnode *rt = NULL;
     
-    std::cout << "Start of pq tree practice program!\n\n";
-    int vec[] = {2, 3, 4};
-    std::vector<int> v(vec, vec + sizeof(vec) / sizeof(int));
-    PQTree tree(v); //defaults to a pnode
-    v[0] = 5;
-    //test the reduction
-    //tree.print_expression();
-    tree.reduce_on(2, v);
-    //tree.print_expression();
-    return EXIT_SUCCESS; //indicates the the program ran successfully
+    while(reading&&i<expr.length()){
+        switch(state){
+            case 0:
+                if(isspace(expr[i])){ //ignore whitespace
+                    ++i;
+                }else if(expr[i]=='{'||expr[i]=='['){
+                    if(expr[i]=='['){
+                        isqnode = true;
+                    }
+                    state = 1; ++i; rt = new PQnode();
+                }else{
+                    return NULL;
+                }
+                break;
+            case 1: //started a node. linking children
+                if(isspace(expr[i])){ //ignore whitespace
+                    ++i;
+                }else if(expr[i]=='{'||expr[i]=='['){ //start the next pnode
+                    PQnode *child = build_from_expr(expr, i);
+                    rt->link_child(child);
+                    ++i;
+                }else if(expr[i]=='}'||expr[i]==']'){
+                    reading = false;
+                }else if(isdigit(expr[i])){
+                    //get the number terminated by a comma
+                    std::string num = "";
+                    while(expr[i]!=' '&&expr[i]!=']'&&expr[i]!='}'&&i<expr.length()){
+                        num += expr[i++];
+                    }
+                    Leaf *lf = new Leaf(rt, atoi(num.c_str()), leaflist);
+                    rt->link_child(lf);
+                }
+                break;
+            default:
+                return NULL;
+                break;
+        }
+    }
+    if(isqnode){
+        rt->set_type(qnode);
+    }
+    return rt;
 }
-
-
 
 
 

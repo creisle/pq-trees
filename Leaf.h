@@ -9,16 +9,24 @@ class Leaf: public Node{
     int value;
     Leaf **leaf_list_ptr;
     public:
-        Leaf(Node *p, int v);
+        //constructors and destructors
+        //Leaf(Node *p, int v);
+        Leaf(Node *p, int v, std::list<Leaf*> &lflist);
         virtual ~Leaf();
+        
+        //testing functions
         void print();
-        void set_mark(marking m);
-        int get_value();
-        void set_leaf_list_ptr(Leaf** ptr);
-        Leaf** get_leaf_list_ptr();
-        void unmark();
         void print_expression(bool m = false);
+        
+        //update and setters
+        void mark();
         void update_depth();
+        //void set_leaf_list_ptr(Leaf** ptr);
+        void unmark();
+        
+        //getters
+        int get_value();
+        //Leaf** get_leaf_list_ptr();
 };
 
 #endif

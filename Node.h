@@ -17,7 +17,7 @@ class Node{
         Node* parent; //pointer to the parent node
         int depth;
         nodetype type;
-        marking mark;
+        marking node_mark;
         
     public:
         Node();
@@ -26,10 +26,13 @@ class Node{
         virtual void print_expression(bool m = false) = 0;
         virtual void update_depth() = 0;
         
+        //getters
         Node* get_parent();
         int get_depth() const;
         nodetype get_type() const;
         marking get_mark() const;
+        
+        //setters
         virtual void unmark();
         void set_parent(Node *p);
         
