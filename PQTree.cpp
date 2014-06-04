@@ -58,23 +58,19 @@ bool PQTree::reduce_on(int value, std::string const tree_in){
 
 bool PQTree::replace_full_with(std::string const tree_in){
     Node* parent = NULL;
-    std::list<Leaf*>::iterator it=leaflist.begin();
-    while(it!=leaflist.end()){
-        Leaf *lf = (*it);
-        if(lf!=NULL){
-            if(lf->get_mark()==full){
-                if(parent&&lf->get_parent()!=parent){
-                    fprintf(stderr, "not all full nodes have the same parent\n");
-                    return false;
-                }else{
-                    parent = lf->get_parent();
-                }
+    std::list<Leaf*> fulls = Leaf::get_pertinent();
+    
+    for(std::list<Leaf*>::iterator it=fulls.begin(); it!=fulls.end(); ++it){
+        if(parent){
+            if((*it)->get_parent()!=parent){
+                fprintf(stderr, "not all full nodes have the same parent\n");
+                return false;
             }
-            ++it;
-        }else{ //remove nulls from the leaflist
-            it = leaflist.erase(it);
+        }else{
+            parent = (*it)->get_parent();
         }
     }
+    
     if(PQnode* temp = dynamic_cast<PQnode*>(parent)){
         int i = 0;
         Node *child = build_from_expr(tree_in, i);
@@ -99,20 +95,16 @@ bool PQTree::replace_full_with(std::string const tree_in){
  * returns the subroot of the pertinent subtree, otherwise NULL if an error occurs
  ********************************************************************************/
 PQnode* PQTree::mark(int v){
-    std::vector<Leaf*> fulls;
-    clean_leaflist();
+    //printf("mark()\n");
+    std::list<Leaf*> fulls = Leaf::mark_pertinent(v);
     //mark the full leaves based on the input value
-    for(std::list<Leaf*>::iterator it=leaflist.begin(); it!=leaflist.end(); ++it){
-        if((*it)->get_value()==v){
-            (*it)->mark();
-            fulls.push_back((*it));
-        }
-    }
+    //printf("mark(): found the fulls leaves\n");
     
     //now find the parents of all the full leaves. add to the partials list but do not add duplicates
     std::list<PQnode*> partials;
-    for(size_t i=0; i<fulls.size(); ++i){
-        PQnode *p = (PQnode*)fulls[i]->get_parent(); //this is the parent we want to add to the list of potential partials
+    for(std::list<Leaf*>::iterator k = fulls.begin(); k!=fulls.end(); ++k){
+        PQnode *p = dynamic_cast<PQnode*>((*k)->get_parent());
+        if(p==NULL){ return NULL;} //this is the parent we want to add to the list of potential partials
         //add it into the partials list by inserting it at the correct position based on decreasing depth
         if(partials.empty()){
             partials.push_back(p);
@@ -160,39 +152,12 @@ PQnode* PQTree::mark(int v){
     
 }
 
-void PQTree::print_leaflist(bool detail/*false*/){
-    if(detail){
-        printf("printing the leaflist .........\n");
-        for(std::list<Leaf*>::iterator it=leaflist.begin(); it!=leaflist.end(); ++it){
-            if((*it)!=NULL){
-                (*it)->print();
-            }else{
-                printf("NULL\n");
-            }
-        }
-        return;
-    }
-    
-    for(std::list<Leaf*>::iterator it=leaflist.begin(); it!=leaflist.end(); ++it){
-        if((*it)!=NULL){
-            printf("%d ", (*it)->get_value());
-        }else{
-            printf("NULL ");
-        }
-    }
-    printf("\n");
-    
-}
-
 //prints an expression that represents the current tree. {} are p nodes, [] are qnodes
 void PQTree::print_expression(bool mark/*false*/){
     root->print_expression(mark);
     printf("\n");
 }
 
-void PQTree::clean_leaflist(){
-    leaflist.remove(NULL);
-}
 
 //takes in a string expression of a pq-tree and builds the corresponding tree
 Node* PQTree::build_from_expr(std::string const expr, int &i){
@@ -231,7 +196,7 @@ Node* PQTree::build_from_expr(std::string const expr, int &i){
                     while(expr[i]!=' '&&expr[i]!=']'&&expr[i]!='}'&&i<expr.length()){
                         num += expr[i++];
                     }
-                    lf = new Leaf(rt, atoi(num.c_str()), leaflist);
+                    lf = new Leaf(rt, atoi(num.c_str()));
                     rt->link_child(lf);
                 }
                 break;

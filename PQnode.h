@@ -17,6 +17,8 @@ class PQnode: public Node{
         //functions for tree reduction
         bool reduce_proot(); //for the subroot if it is a pnode
         bool reduce_qroot();
+        bool qreduce(bool direction);
+        bool preduce(bool direction);
         bool reduce(bool direction); //for descedants of the pertinent subroot
         Node* group_children(std::list<Node*> group);
         
@@ -27,8 +29,6 @@ class PQnode: public Node{
         
         //utility functions for the children
         void sort_children();
-        bool replace_child(int value, Node::Node *tree);
-        bool remove_child(int value);
         Node* pop_child();
         int count_children();
         

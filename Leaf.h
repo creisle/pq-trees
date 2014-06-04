@@ -6,12 +6,13 @@
 #include "Node.h"
 
 class Leaf: public Node{
+    
     private:
         int value;
         Leaf **leaf_list_ptr;
     public:
         //constructors and destructors
-        Leaf(Node *p, int v, std::list<Leaf*> &lflist);
+        Leaf(Node *p, int v);
         virtual ~Leaf();
         
         //testing functions
@@ -25,6 +26,9 @@ class Leaf: public Node{
         
         //getters
         int get_value();
+        
+        static std::list<Leaf*> get_pertinent();
+        static std::list<Leaf*> mark_pertinent(int value);
 };
 
 #endif

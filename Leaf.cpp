@@ -6,14 +6,15 @@
 #include "Leaf.h"
 
 static bool test_leaks = false;
+static std::list<Leaf*> leaflist;
 
-Leaf::Leaf(Node *p, int v, std::list<Leaf*> &lflist): Node(){
+Leaf::Leaf(Node *p, int v): Node(){
     if(test_leaks){ printf("LEAF ++\n"); }
     parent = p;
     value = v;
     depth = p->get_depth() +1;
-    lflist.push_back(this);
-    leaf_list_ptr = &lflist.back();
+    leaflist.push_back(this);
+    leaf_list_ptr = &leaflist.back();
 }
 
 
@@ -59,6 +60,40 @@ void Leaf::update_depth(){
     }else{
         depth = parent->get_depth() + 1;
     }
+}
+
+std::list<Leaf*> Leaf::mark_pertinent(int v){
+    //printf("mark_pertinent()\n");
+    std::list<Leaf*> fulls;
+    std::list<Leaf*>::iterator it=leaflist.begin();
+    while(it!=leaflist.end()){
+        if((*it)==NULL){
+            it = leaflist.erase(it);
+        }else{
+            if((*it)->get_value()==v){
+                (*it)->mark();
+                fulls.push_back((*it));
+            }
+            ++it;
+        }
+    }
+    return fulls;
+}
+
+std::list<Leaf*> Leaf::get_pertinent(){
+    std::list<Leaf*> fulls;
+    std::list<Leaf*>::iterator it=leaflist.begin();
+    while(it!=leaflist.end()){
+        if((*it)==NULL){
+            it = leaflist.erase(it);
+        }else{
+            if((*it)->get_mark()==full){
+                fulls.push_back((*it)); 
+            }
+            ++it;
+        }
+    }
+    return fulls;
 }
 
 

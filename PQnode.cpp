@@ -64,36 +64,6 @@ int PQnode::mark_node(){
     return 0;
 }
 
-bool PQnode::remove_child(int value){
-    for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
-        if(Leaf* lf = dynamic_cast<Leaf*>(*it)){
-            if(lf->get_value()==value){
-                //children.remove(*it);
-                it = children.erase(it);
-                delete lf; //this will call lf's destructor
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool PQnode::replace_child(int value, Node *child){
-    for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
-        if(Leaf* lf = dynamic_cast<Leaf*>(*it)){
-            if(lf->get_value()==value){
-                children.insert(it, child);
-                child->set_parent(this);
-                it = children.erase(it);
-                delete lf; //this will call lf's destructor
-                child->update_depth();
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 void PQnode::sort_children(){
     children.sort(compare_marking);
 }
@@ -233,28 +203,44 @@ bool PQnode::reduce_proot(){
         return true;
     }
     //create the new qnode to house the full and partial children
-    PQnode *qtemp = new PQnode();
+    if(!children.empty()){ //has empty children
+        PQnode *qtemp = new PQnode();
     
-    for(it=partials_list.begin(); it!=partials_list.end(); ++it){
-        qtemp->link_child((*it));
+        for(it=partials_list.begin(); it!=partials_list.end(); ++it){
+            qtemp->link_child((*it));
+        }
+        partials_list.clear();
+        
+        //group the full nodes into a qnode with the partials
+        qtemp->link_child(group_children(full_list));
+        
+        //if there is another partial child, add it here
+        for(it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it){
+            qtemp->link_child((*it));
+        }
+        sec_partials_list.clear();
+        
+        qtemp->set_type(qnode);
+        //link the qnode to the parent node
+        qtemp->mark_node();
+        link_child(qtemp);
+        
+    }else{ //no empty children. make the subroot a qnode
+        for(it=partials_list.begin(); it!=partials_list.end(); ++it){
+            link_child((*it));
+        }
+        partials_list.clear();
+        
+        //group the full nodes into a qnode with the partials
+        link_child(group_children(full_list));
+        
+        //if there is another partial child, add it here
+        for(it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it){
+            link_child((*it));
+        }
+        sec_partials_list.clear();
+        set_type(qnode);
     }
-    partials_list.clear();
-    
-    //group the full nodes into a qnode with the partials
-    qtemp->link_child(group_children(full_list));
-    
-    //if there is another partial child, add it here
-    for(it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it){
-        qtemp->link_child((*it));
-    }
-    sec_partials_list.clear();
-    
-    qtemp->set_type(qnode);
-    
-    //link the qnode to the parent node
-    qtemp->mark_node();
-    link_child(qtemp);
-    
     return true;
     
 }
@@ -331,24 +317,20 @@ bool PQnode::reduce_qroot(){
 //cannot use on the subroot
 //returns an error id any is unreducible
 bool PQnode::reduce(bool direction){
-    //printf("before reducing the current node: ");
-    //print_expression(true);
-    //printf("\n");
-    //create the lists
+    
+    if(type==pnode){ //if a p node. call ordering funciton
+        return preduce(direction);
+    }else{ //if qnode, don't. but can reverse to ensure empty children are at the head of the list
+        return qreduce(direction);
+    }
+}
+
+bool PQnode::preduce(bool direction){
     std::list<Node*> empty_list;
     std::list<Node*> partials_list;
     std::list<Node*> full_list; //temporary list to store directed node stuff
     
-    if(type==pnode){ //if a p node. call ordering funciton
-        sort_children();
-    }else{ //if qnode, don't. but can reverse to ensure empty children are at the head of the list
-        if(!children.empty()){
-            if(children.front()->get_mark()!=empty){
-                children.reverse();
-            }
-        }
-    }
-    
+    sort_children();
     std::list<Node*>::iterator it=children.begin();
     //it!=children.end(); ++it;
     while(it!=children.end()){ //find all the empty children
@@ -392,6 +374,7 @@ bool PQnode::reduce(bool direction){
     //now group the children from the empty list into a pnode if necessary (more than 2)
     link_child(group_children(empty_list));
     
+    
     if(!partials_list.empty()){
         //now deal with the partial node children
         for(it=partials_list.begin(); it!=partials_list.end(); ++it){
@@ -405,6 +388,55 @@ bool PQnode::reduce(bool direction){
     
     set_type(qnode);
     
+    return true;
+}
+
+bool PQnode::qreduce(bool direction){
+    std::list<Node*> empty_list;
+    std::list<Node*> partials_list;
+    std::list<Node*> full_list; //temporary list to store directed node stuff
+    
+    if(!children.empty()){
+        if(children.front()->get_mark()!=empty){
+            children.reverse();
+        }
+    }
+    
+    std::list<Node*>::iterator it=children.begin();
+    while(it!=children.end()){ //skip all the empty children
+        if((*it)->get_mark()!=empty){
+            break;
+        }
+        ++it;
+    }
+    
+    if(it!=children.end()){ //find all the partial children and insert them in order into the qnode
+        PQnode *ch = dynamic_cast<PQnode*>(*it);
+        if(ch&&(*it)->get_mark()==partial){
+            //recurse
+            //add all the children of the node lower than this one
+            it = children.erase(it);
+            if(ch->reduce(direction)){
+                Node *temp = ch->pop_child();
+                while(temp!=NULL){
+                    children.insert(it, temp);
+                    temp->set_parent(this);
+                    temp->update_depth();
+                    temp = ch->pop_child();
+                }
+            }else{
+                return false;
+            }
+            delete ch;
+        } 
+    }
+    
+    while(it!=children.end()){ //skip all the full children
+        if((*it)->get_mark()!=full){
+            return false;
+        }
+        ++it;
+    }
     return true;
 }
 

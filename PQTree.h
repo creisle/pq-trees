@@ -19,11 +19,11 @@ class Node;
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 class PQTree{
     private:
-        std::list<Leaf*> leaflist; //list of the leaves for each given "value". first leaf in the list will
+        //std::list<Leaf*> leaflist; //list of the leaves for each given "value". first leaf in the list will
         PQnode *root; //pointer to the root of the PQ tree
         Node* build_from_expr(std::string const expr, int &i);
         PQnode* mark(int value);
-        void clean_leaflist();
+        //void clean_leaflist();
         bool replace_full_with(std::string const tree_in);
         
     public:

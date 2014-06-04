@@ -52,6 +52,11 @@ class Tests{
             printf("EXPECT:\t{ }\nFOUND:\t");
             tree.print_expression();
             
+            printf("adding node 6\n");
+            if(!tree.reduce_on(6, "{7}")){ return false; }
+            printf("EXPECT:\t{ }\nFOUND:\t");
+            tree.print_expression();
+            
             return true;
         }
     
