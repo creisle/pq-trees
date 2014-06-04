@@ -5,6 +5,8 @@
 
 #include "Leaf.h"
 
+bool contains(std::vector<int> vec, int v);
+
 static bool test_leaks = false;
 static std::list<Leaf*> leaflist;
 
@@ -70,7 +72,16 @@ void Leaf::update_depth(){
     }
 }
 
-std::list<Leaf*> Leaf::mark_pertinent(int v){
+bool contains(std::vector<int> vec, int v){
+    for(size_t i=0; i<vec.size(); ++i){
+        if(v==vec[i]){
+            return true;
+        }
+    }
+    return false;
+}
+
+std::list<Leaf*> Leaf::mark_pertinent(std::vector<int> vec){
     //printf("mark_pertinent()\n");
     std::list<Leaf*> fulls;
     std::list<Leaf*>::iterator it=leaflist.begin();
@@ -78,7 +89,7 @@ std::list<Leaf*> Leaf::mark_pertinent(int v){
         if((*it)==NULL){
             it = leaflist.erase(it);
         }else{
-            if((*it)->get_value()==v){
+            if(contains(vec, (*it)->get_value())){
                 (*it)->mark();
                 fulls.push_back((*it));
             }

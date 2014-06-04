@@ -45,26 +45,18 @@ void PQTree::print(){
     }
 }
 
-//use this method for planarity testing
-bool PQTree::reduce_on(int value, std::string const tree_in){
-    if(follow){ printf("PQTree::reduce_on(int value, std::string const tree_in)\n"); }
-    
-    PQnode* subroot = mark(value); //pertinent subroot
-    if(subroot==NULL){ return false; }
-    if(!(subroot->reduce())){ return false; }
-    size_t i = 0;
-    Node *child = build_from_expr(tree_in, i);
-    if(!replace_full_with(child)){ return false; }
-    return true;
-}
-
 //use for planatiry testing
-bool PQTree::reduce_on(int value, std::vector<int> tree_in){
+//input vector of ints represents the leaves of the new universal tree
+bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in){
     if(follow){ printf("PQTree::reduce_on(int value, std::vector<int> tree_in)\n"); }
     
-    PQnode* subroot = mark(value); //pertinent subroot
+    //put the value inside a vector
+    std::vector<int> values;
+    values.push_back(v);
+    
+    PQnode* subroot = reduce(values); //pertinent subroot
     if(subroot==NULL){ return false; }
-    if(!(subroot->reduce())){ return false; }
+    
     Node *child;
     if(tree_in.size()==1){
         child = new Leaf(tree_in[0]);
@@ -72,6 +64,31 @@ bool PQTree::reduce_on(int value, std::vector<int> tree_in){
         child = new PQnode(tree_in);
     }
     if(!replace_full_with(child)){ return false; }
+    
+    subroot->unmark();
+    
+    return true;
+}
+
+PQnode* PQTree::reduce(std::vector<int> values){
+    if(follow){ printf("PQTree::reduce(int value)\n"); }
+    
+    PQnode* subroot = mark(values); //pertinent subroot
+    print_expression(true);
+    if(follow){ printf("PQTree::reduce(int value). marked as "); print_expression(true); }
+    if(subroot!=NULL){
+        if(subroot->reduce()){
+            return subroot;
+        }
+    }
+    return NULL;
+}
+
+bool PQTree::set_consecutive(std::vector<int> values){
+    PQnode *subroot = reduce(values);
+    if(subroot==NULL){ return false; }
+    
+    subroot->unmark();
     return true;
 }
 
@@ -111,14 +128,12 @@ bool PQTree::replace_full_with(Node *child){
  * purpose: marks the pertinent subtree
  * returns the subroot of the pertinent subtree, otherwise NULL if an error occurs
  ********************************************************************************/
-PQnode* PQTree::mark(int v){
-    //printf("mark()\n");
+PQnode* PQTree::mark(std::vector<int> v){
+    
     if(follow){ printf("PQTree::mark(int v)\n"); }
     
-    std::list<Leaf*> fulls = Leaf::mark_pertinent(v);
-    //mark the full leaves based on the input value
-    //printf("mark(): found the fulls leaves\n");
-    
+    std::list<Leaf*> fulls = Leaf::mark_pertinent(v); //mark the full leaves based on the input values
+        
     //now find the parents of all the full leaves. add to the partials list but do not add duplicates
     std::list<PQnode*> partials;
     for(std::list<Leaf*>::iterator k = fulls.begin(); k!=fulls.end(); ++k){
@@ -143,10 +158,9 @@ PQnode* PQTree::mark(int v){
     //at this point we have a list of potential partials sorted by depth with no duplicates
     //now we need to mark these nodes.... and then their parents until there is only one node left in the partials list
     while(partials.size()>1){
-        //always deal with the front element first
-        //mark the node
-        PQnode *curr = partials.front();
-        curr->mark_node();
+        
+        PQnode *curr = partials.front();//always deal with the front element first
+        curr->mark_node(); //mark the node
         PQnode *p = (PQnode*)curr->get_parent(); //any parent in the tree will never be a leaf since they cannot have children. therefore this casting is safe
         partials.pop_front(); //remove the curr node and destroy the reference
         
@@ -165,8 +179,6 @@ PQnode* PQTree::mark(int v){
         partials.front()->mark_node();
         return partials.front();
     }
-    //printf("after marking ");
-    //print_expression(true);
     return NULL;
     
 }

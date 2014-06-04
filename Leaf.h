@@ -35,7 +35,7 @@ class Leaf: public Node{
         int get_value();
         
         static std::list<Leaf*> get_pertinent();
-        static std::list<Leaf*> mark_pertinent(int value);
+        static std::list<Leaf*> mark_pertinent(std::vector<int> values);
 };
 
 #endif

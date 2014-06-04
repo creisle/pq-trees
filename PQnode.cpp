@@ -91,11 +91,7 @@ void PQnode::unmark(){ //passes by ref
     node_mark = empty;
     //recurse by children, if they are not empty
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
-        if(PQnode *p = dynamic_cast<PQnode*>(*it)){
-            p->unmark();
-        }else{
-            (*it)->unmark();
-        }
+        (*it)->unmark();
     }
 }
 

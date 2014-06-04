@@ -24,8 +24,9 @@ class PQTree{
     private:
         PQnode *root; //pointer to the root of the PQ tree
         Node* build_from_expr(std::string const expr, size_t &i);
-        PQnode* mark(int value);
+        PQnode* mark(std::vector<int> values);
         bool replace_full_with(Node *child);
+        PQnode* reduce(std::vector<int> values);
         
     public:
         PQTree();
@@ -39,8 +40,9 @@ class PQTree{
         void print_leaflist(bool detail = false); //prints the contents of the leaflist
         
         //reduction opertaions
-        bool reduce_on(int value, std::string const tree_in); //planarity testing
-        bool reduce_on(int value, std::vector<int> v); //planarity testing
+        bool reduce_and_replace(int value, std::vector<int> v); //planarity testing
+        bool set_consecutive(std::vector<int> values); //for testing consectutive ones of a matrix
+        
 };
 
 #endif
