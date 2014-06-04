@@ -17,6 +17,14 @@ Leaf::Leaf(Node *p, int v): Node(){
     leaf_list_ptr = &leaflist.back();
 }
 
+Leaf::Leaf(int v): Node(){
+    if(test_leaks){ printf("LEAF ++\n"); }
+    parent = NULL;
+    value = v;
+    leaflist.push_back(this);
+    leaf_list_ptr = &leaflist.back();
+}
+
 
 Leaf::~Leaf(){
     //follow pointer to the leaflist entry to null it's pointer
@@ -46,7 +54,7 @@ void Leaf::print_expression(bool print_mark /*false*/){
             case partial:
                 printf("p:");
                 break;
-            default:
+            case empty:
                 printf("e:");
                 break;
         }

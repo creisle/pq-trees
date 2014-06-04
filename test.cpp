@@ -5,8 +5,7 @@
  *
  */
 
-#include "PQTree.h"
-#include <stdlib.h>
+#include "test.h"
 
 
 class Tests{
@@ -27,38 +26,33 @@ class Tests{
             printf("TESTING: \n");
             printf("purpose: tests a planar graph example\n");
             
-            printf("adding node 1\n");
-            PQTree tree("{2 3 4 5 6}");
-            printf("EXPECT\t{ 2  3  4  5  6 }\nFOUND:\t");
+            std::vector< std::vector<int> > adj = {
+                {2, 3, 4, 5, 6},
+                {3, 6, 7},
+                {4, 7},
+                {5, 7},
+                {7},
+                {7}
+            };
+            
+            printf("adding node %d\n", 1);
+            PQTree tree(adj[0]);
             tree.print_expression();
             
-            printf("adding node 2\n");
-            if(!tree.reduce_on(2, "{3 6 7}")){ return false; }
-            printf("EXPECT:\t{ 3  4  5  6  { 3  6  7 } }\nFOUND:\t");
-            tree.print_expression();
-            
-            printf("adding node 3\n");
-            if(!tree.reduce_on(3, "{4 7}")){ return false; }
-            printf("EXPECT: { { { 6 7 } { 4 7 } } 4 5 6 }\t\nFOUND:\t");
-            tree.print_expression();
-            
-            printf("adding node 4\n");
-            if(!tree.reduce_on(4, "{5 7}")){ return false; }
-            printf("EXPECT:\t{ [ { 6 7 } 7 { 5 7 } ] 5 6 }\nFOUND:\t");
-            tree.print_expression();
-            
-            printf("adding node 5\n");
-            if(!tree.reduce_on(5, "{7}")){ return false; }
-            printf("EXPECT:\t{ }\nFOUND:\t");
-            tree.print_expression();
-            
-            printf("adding node 6\n");
-            if(!tree.reduce_on(6, "{7}")){ return false; }
-            printf("EXPECT:\t{ }\nFOUND:\t");
-            tree.print_expression();
-            
+            for(size_t i=1; i<adj.size(); i++){
+                int curr = (int)(i+1);
+                printf("adding node %d\n", curr);
+                std::vector<int> v = adj[i];
+                if(!tree.reduce_on(curr, v)){ return false; }
+                tree.print_expression();
+            }
             return true;
         }
+        
+        static bool test_consec_ones(){
+            return false;
+        }
+        
     
 };
 

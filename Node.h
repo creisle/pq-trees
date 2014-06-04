@@ -2,6 +2,9 @@
 #ifndef __NODE_H
 #define __NODE_H
 
+//warning to ignore
+#pragma GCC diagnostic ignored "-Wpadded"
+
 //dependencies
 #include <iostream>
 #include <cstdlib>

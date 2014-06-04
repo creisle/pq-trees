@@ -10,14 +10,18 @@
  */
 
 #include "PQTree.h"
-
+static bool follow = false; //use this to find bugs. prints out function names when a function is executed
 
 PQTree::PQTree(){
     root = NULL;
 }
 
+PQTree::PQTree(std::vector<int> leaves){
+    root = new PQnode(leaves);
+}
+
 PQTree::PQTree(std::string const expr){
-    int i=0;
+    size_t i=0;
     if(PQnode *tmp = dynamic_cast<PQnode*>(build_from_expr(expr, i))){
         root = tmp;
     }else{
@@ -41,23 +45,41 @@ void PQTree::print(){
     }
 }
 
-/* ***************************************************************************************
- * procedure: reduce_on(int value)
- * purpose: marks the nodes as full or empty based on the given value
- * then applies the templates to enforce consecutive ordering of the nodes with this value
- * returns -1 if the reduciton step fails
- * returns 0 if the reduction step is successfull.
- *****************************************************************************************/
+//use this method for planarity testing
 bool PQTree::reduce_on(int value, std::string const tree_in){
+    if(follow){ printf("PQTree::reduce_on(int value, std::string const tree_in)\n"); }
+    
     PQnode* subroot = mark(value); //pertinent subroot
     if(subroot==NULL){ return false; }
     if(!(subroot->reduce())){ return false; }
-    if(!replace_full_with(tree_in)){ return false; }
+    size_t i = 0;
+    Node *child = build_from_expr(tree_in, i);
+    if(!replace_full_with(child)){ return false; }
     return true;
 }
 
-bool PQTree::replace_full_with(std::string const tree_in){
+//use for planatiry testing
+bool PQTree::reduce_on(int value, std::vector<int> tree_in){
+    if(follow){ printf("PQTree::reduce_on(int value, std::vector<int> tree_in)\n"); }
+    
+    PQnode* subroot = mark(value); //pertinent subroot
+    if(subroot==NULL){ return false; }
+    if(!(subroot->reduce())){ return false; }
+    Node *child;
+    if(tree_in.size()==1){
+        child = new Leaf(tree_in[0]);
+    }else{
+        child = new PQnode(tree_in);
+    }
+    if(!replace_full_with(child)){ return false; }
+    return true;
+}
+
+bool PQTree::replace_full_with(Node *child){
+    if(follow){ printf("PQTree::replace_full_with(Node *child)\n"); }
+    
     Node* parent = NULL;
+    if(child==NULL){ return false; }
     std::list<Leaf*> fulls = Leaf::get_pertinent();
     
     for(std::list<Leaf*>::iterator it=fulls.begin(); it!=fulls.end(); ++it){
@@ -72,9 +94,6 @@ bool PQTree::replace_full_with(std::string const tree_in){
     }
     
     if(PQnode* temp = dynamic_cast<PQnode*>(parent)){
-        int i = 0;
-        Node *child = build_from_expr(tree_in, i);
-        if(child==NULL){ return false; }
         if(!(temp->condense_and_replace(child))){
             fprintf(stderr, "condense failed\n");
             return false;
@@ -87,8 +106,6 @@ bool PQTree::replace_full_with(std::string const tree_in){
     return true;
 }
 
-
-
 /*******************************************************************************
  * Function PQTree::mark(int value)
  * purpose: marks the pertinent subtree
@@ -96,6 +113,8 @@ bool PQTree::replace_full_with(std::string const tree_in){
  ********************************************************************************/
 PQnode* PQTree::mark(int v){
     //printf("mark()\n");
+    if(follow){ printf("PQTree::mark(int v)\n"); }
+    
     std::list<Leaf*> fulls = Leaf::mark_pertinent(v);
     //mark the full leaves based on the input value
     //printf("mark(): found the fulls leaves\n");
@@ -160,7 +179,9 @@ void PQTree::print_expression(bool mark/*false*/){
 
 
 //takes in a string expression of a pq-tree and builds the corresponding tree
-Node* PQTree::build_from_expr(std::string const expr, int &i){
+Node* PQTree::build_from_expr(std::string const expr, size_t &i){
+    if(follow){ printf("PQTree::build_from_expr(std::string const expr, int &i)\n"); }
+    
     int state = 0;
     bool reading = true;
     bool isqnode = false;
@@ -202,7 +223,6 @@ Node* PQTree::build_from_expr(std::string const expr, int &i){
                 break;
             default:
                 return NULL;
-                break;
         }
     }
     if(isqnode&&rt->count_children()>2){

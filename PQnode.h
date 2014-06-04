@@ -3,6 +3,9 @@
 #ifndef __PQNode_H
 #define __PQNode_H
 
+//warning to ignore
+#pragma GCC diagnostic ignored "-Wpadded"
+
 //dependencies
 #include "Node.h"
 #include "Leaf.h"
@@ -25,12 +28,13 @@ class PQnode: public Node{
     public:
         //constructors and deconstructor
         PQnode();
+        PQnode(std::vector<int> leaves, nodetype t = pnode);
         virtual ~PQnode();
         
         //utility functions for the children
         void sort_children();
         Node* pop_child();
-        int count_children();
+        size_t count_children();
         
         
         //to do with the tree

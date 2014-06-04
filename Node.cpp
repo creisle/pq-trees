@@ -4,6 +4,7 @@
 
 #include "Node.h"
 
+
 //this will be the parent class for P-nodes, C-nodes and Q-nodes
 //on the reduction step will ensure that we have a valid PQ tree
 Node::Node(){ //default constructor
