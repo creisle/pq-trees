@@ -82,7 +82,6 @@ bool contains(std::vector<int> vec, int v){
 }
 
 std::list<Leaf*> Leaf::mark_pertinent(std::vector<int> vec){
-    //printf("mark_pertinent()\n");
     std::list<Leaf*> fulls;
     std::list<Leaf*>::iterator it=leaflist.begin();
     while(it!=leaflist.end()){
@@ -114,5 +113,6 @@ std::list<Leaf*> Leaf::get_pertinent(){
     }
     return fulls;
 }
+
 
 

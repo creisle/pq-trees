@@ -21,16 +21,14 @@ std::string print_vec(std::vector<int> v){
 
 class Tests{
     public:
-        static void test_build_from_expr(){
+        static void test_build_from_expr(std::string exp){
             printf("TESTING: PQTree(std::string const expression)\n");
             printf("purpose: tests building the tree using expressions\n");
-            std::string exp = "{ 2 3 [ 6 7 8] 4 5 {6 8}}";
             printf("input: %s\n", exp.c_str());
             PQTree tree(exp);
             printf("output: ");
             tree.print_expression();
-            printf("leaflist: ");
-            tree.print_leaflist();
+            printf("\n");
         }
         
         static bool test_planar(){
@@ -77,7 +75,7 @@ class Tests{
             
             for(size_t i=0; i<mat.size(); ++i){
                 int curr = (int)(i+1);
-                printf("adding the contraints from row %d: %s\n", curr, print_vec(mat[i]).c_str());
+                printf("adding the constraints from row %d: %s\n", curr, print_vec(mat[i]).c_str());
                 if(!tree.set_consecutive(mat[i])){ return false; }
                 tree.print_expression(true);
             }
@@ -92,7 +90,9 @@ class Tests{
 int main(){
     
     std::cout << "Start of pq tree practice program!\n\n";
-    //Tests::test_planar();
+    Tests::test_build_from_expr("{ 2 3 [ 6 7 8] 4 5 {6 8}}");
+    Tests::test_build_from_expr("{ 2 3 [ 7 8] }");
+    Tests::test_planar();
     Tests::test_consec_ones();
     
     
