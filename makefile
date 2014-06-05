@@ -1,8 +1,12 @@
 CXX = clang++
 FLAGS = -std=c++11 -stdlib=libc++
+CPPTEST = -I/usr/local/include
+CPPUNIT = -I/usr/local/Cellar
+CFILES = testing.cpp
 
 pract: *.cpp
-	$(CXX) $(FLAGS) *.cpp -o pract -I/usr/local/include
+	$(CXX) $(FLAGS) $(CFILES) -o pract $(CPPTEST) $(CPPUNIT)
+
 run:
 	./pract
 clean:

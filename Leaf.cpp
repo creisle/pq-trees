@@ -114,5 +114,9 @@ std::list<Leaf*> Leaf::get_pertinent(){
     return fulls;
 }
 
+size_t Leaf::get_leaflist_size(){
+    return leaflist.size();
+}
+    
 
 

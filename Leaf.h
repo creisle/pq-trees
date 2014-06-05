@@ -36,6 +36,7 @@ class Leaf: public Node{
         
         static std::list<Leaf*> get_pertinent();
         static std::list<Leaf*> mark_pertinent(std::vector<int> values);
+        static size_t get_leaflist_size();
 };
 
 #endif
