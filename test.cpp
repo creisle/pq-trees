@@ -5,7 +5,17 @@
  *
  */
 
-#include "test.h"
+#include <stdlib.h>
+#include <sstream>
+
+
+#include "PQTree.h"
+
+// warnings to tell the compiler to ignore
+#pragma GCC diagnostic ignored "-Wpadded"
+#pragma GCC diagnostic ignored "-Wc++98-compat"
+
+//compile using: clang++ -std=c++11 -stdlib=libc++ -Weverything *.cpp -o pract
 
 std::string print_vec(std::vector<int> v);
 
