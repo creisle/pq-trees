@@ -1,14 +1,42 @@
-
-#ifndef __TEST_H
-#define __TEST_H
-
 #include "PQTree.h"
-#include <stdlib.h>
-#include <sstream>
+#include <cpptest.h>
 
+// warnings to tell the compiler to ignore
 #pragma GCC diagnostic ignored "-Wpadded"
 #pragma GCC diagnostic ignored "-Wc++98-compat"
 
-//compile using: clang++ -std=c++11 -stdlib=libc++ -Weverything *.cpp -o pract
+class LeafTests : public Test::Suite{
+    public:
+        LeafTests(){
+            TEST_ADD(LeafTests::first_test)
+            TEST_ADD(LeafTests::second_test)
+        }
+        
+    private:
+        void first_test();
+        void second_test();
+};
 
-#endif
+class PQTreeTests : public Test::Suite{
+    public:
+        PQTreeTests(){
+            TEST_ADD(PQTreeTests::first_test)
+            TEST_ADD(PQTreeTests::second_test)
+        }
+        
+    private:
+        void first_test();
+        void second_test();
+};
+
+class PQnodeTests : public Test::Suite{
+    public:
+        PQnodeTests(){
+            TEST_ADD(PQnodeTests::first_test)
+            TEST_ADD(PQnodeTests::second_test)
+        }
+        
+    private:
+        void first_test();
+        void second_test();
+};

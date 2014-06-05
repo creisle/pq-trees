@@ -5,18 +5,33 @@
  *
  */
 
+
+#include "test.h"
+
+
+
+int main(){
+    printf("\nStart of the PQTree testing program\n\n");
+    return EXIT_SUCCESS; //indicates the the program ran successfully
+}
+
+
+
+
+
+
+
+/*
 #include <stdlib.h>
 #include <sstream>
+std::cout << "Start of pq tree practice program!\n\n";
+Tests::test_build_from_expr("{ 2 3 [ 6 7 8] 4 5 {6 8}}");
+Tests::test_build_from_expr("{ 2 3 [ 7 8] }");
+Tests::test_planar();
+Tests::test_consec_ones();
+*/
 
-
-#include "PQTree.h"
-
-// warnings to tell the compiler to ignore
-#pragma GCC diagnostic ignored "-Wpadded"
-#pragma GCC diagnostic ignored "-Wc++98-compat"
-
-//compile using: clang++ -std=c++11 -stdlib=libc++ -Weverything *.cpp -o pract
-
+/*
 std::string print_vec(std::vector<int> v);
 
 std::string print_vec(std::vector<int> v){
@@ -94,17 +109,4 @@ class Tests{
         }
         
     
-};
-
-
-int main(){
-    
-    std::cout << "Start of pq tree practice program!\n\n";
-    Tests::test_build_from_expr("{ 2 3 [ 6 7 8] 4 5 {6 8}}");
-    Tests::test_build_from_expr("{ 2 3 [ 7 8] }");
-    Tests::test_planar();
-    Tests::test_consec_ones();
-    
-    
-    return EXIT_SUCCESS; //indicates the the program ran successfully
-}
+};*/
