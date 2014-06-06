@@ -15,7 +15,8 @@
 enum nodetype {pnode , qnode, leafnode};
 enum marking {empty, partial, full};
 
-class Node{
+class Node
+{
     protected:
         Node* parent; //pointer to the parent node
         int depth;

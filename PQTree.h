@@ -20,7 +20,8 @@ class Node;
  * will require some editing to use for consecutive ones
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-class PQTree{
+class PQTree
+{
     private:
         PQnode *root; //pointer to the root of the PQ tree
         std::list<Leaf*> leaflist;

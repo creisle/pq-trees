@@ -13,7 +13,8 @@
 //forward declarations
 
 
-class PQnode: public Node{
+class PQnode: public Node
+{
     private:
         std::list<Node*> children; //empty list of children
         

@@ -14,15 +14,18 @@ static bool follow = false; //use this to find bugs. prints out function names w
 
 bool contains(std::vector<int> vec, int v);
 
-PQTree::PQTree(){
+PQTree::PQTree()
+{
     root = NULL;
 }
 
-PQTree::PQTree(std::vector<int> leaves){
+PQTree::PQTree(std::vector<int> leaves)
+{
     root = new PQnode(leaves, leaflist);
 }
 
-PQTree::PQTree(std::string const expr){
+PQTree::PQTree(std::string const expr)
+{
     size_t i=0;
     if(PQnode *tmp = dynamic_cast<PQnode*>(build_from_expr(expr, i))){
         root = tmp;
@@ -33,13 +36,15 @@ PQTree::PQTree(std::string const expr){
     }
 }
 
-PQTree::~PQTree(){
+PQTree::~PQTree()
+{
     delete root;
     root = NULL;
 }
 
 //iterates recusively through the tree and prints out leaves and nodes
-void PQTree::print(){
+void PQTree::print()
+{
     if(root==NULL){
         printf("Empty tree\n");
     }else{
@@ -49,7 +54,8 @@ void PQTree::print(){
 
 //use for planatiry testing
 //input vector of ints represents the leaves of the new universal tree
-bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in){
+bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
+{
     if(follow){ printf("PQTree::reduce_and_replace(int value, std::vector<int> tree_in)\n"); }
     
     //put the value inside a vector
@@ -72,7 +78,8 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in){
     return true;
 }
 
-PQnode* PQTree::reduce(std::vector<int> values){
+PQnode* PQTree::reduce(std::vector<int> values)
+{
     if(follow){ printf("PQTree::reduce(int value)\n"); }
     
     PQnode* subroot = mark(values); //pertinent subroot
@@ -88,7 +95,8 @@ PQnode* PQTree::reduce(std::vector<int> values){
     return NULL;
 }
 
-bool PQTree::set_consecutive(std::vector<int> values){
+bool PQTree::set_consecutive(std::vector<int> values)
+{
     if(follow){ printf("PQTree::set_consecutive(std::vector<int> values)\n"); }
     PQnode *subroot = reduce(values);
     if(subroot==NULL){ return false; }
@@ -97,7 +105,8 @@ bool PQTree::set_consecutive(std::vector<int> values){
     return true;
 }
 
-bool PQTree::replace_full_with(Node *child){
+bool PQTree::replace_full_with(Node *child)
+{
     if(follow){ printf("PQTree::replace_full_with(Node *child)\n"); }
     
     Node* parent = NULL;
@@ -133,7 +142,8 @@ bool PQTree::replace_full_with(Node *child){
  * purpose: marks the pertinent subtree
  * returns the subroot of the pertinent subtree, otherwise NULL if an error occurs
  ********************************************************************************/
-PQnode* PQTree::mark(std::vector<int> v){
+PQnode* PQTree::mark(std::vector<int> v)
+{
     
     if(follow){ printf("PQTree::mark(int v)\n"); }
     
@@ -189,14 +199,16 @@ PQnode* PQTree::mark(std::vector<int> v){
 }
 
 //prints an expression that represents the current tree. {} are p nodes, [] are qnodes
-std::string PQTree::print_expression(bool mark/*false*/){
+std::string PQTree::print_expression(bool mark/*false*/)
+{
     std::string result = root->print_expression(mark);
     return result;
 }
 
 
 //takes in a string expression of a pq-tree and builds the corresponding tree
-Node* PQTree::build_from_expr(std::string const expr, size_t &i){
+Node* PQTree::build_from_expr(std::string const expr, size_t &i)
+{
     if(follow){ printf("PQTree::build_from_expr(std::string const expr, int &i)\n"); }
     
     int state = 0;
@@ -251,7 +263,8 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i){
 }
 
 
-std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec){
+std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec)
+{
     if(follow){ printf("PQTree::mark_pertinent(std::vector<int> vec)\n"); }
     std::list<Leaf*> fulls;
     std::list<Leaf*>::iterator it=leaflist.begin();
@@ -269,7 +282,8 @@ std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec){
     return fulls;
 }
 
-std::list<Leaf*> PQTree::get_pertinent(){
+std::list<Leaf*> PQTree::get_pertinent()
+{
     if(follow){ printf("PQTree::get_pertinent()\n"); }
     std::list<Leaf*> fulls;
     std::list<Leaf*>::iterator it=leaflist.begin();

@@ -12,8 +12,8 @@
 #include "Node.h"
 #include <string>
 
-class Leaf: public Node{
-    
+class Leaf: public Node
+{
     private:
         int value;
         Leaf **leaf_list_ptr;
@@ -34,10 +34,6 @@ class Leaf: public Node{
         
         //getters
         int get_value();
-        
-        //static std::list<Leaf*> get_pertinent();
-        //static std::list<Leaf*> mark_pertinent(std::vector<int> values);
-        //static size_t get_leaflist_size();
 };
 
 #endif

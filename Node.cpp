@@ -7,7 +7,8 @@
 
 //this will be the parent class for P-nodes, C-nodes and Q-nodes
 //on the reduction step will ensure that we have a valid PQ tree
-Node::Node(){ //default constructor
+Node::Node() //default constructor
+{ 
     parent = NULL;
     depth = 0;
     node_mark = empty;
@@ -15,14 +16,18 @@ Node::Node(){ //default constructor
 
 //this procedure is just for testing purposes
 // paritally abstract?
-void Node::print(){
+void Node::print()
+{
     printf("Node addr: %p\n", this);
-    if(parent==NULL){
+    if(parent==NULL)
+    {
         printf("parent addr: NULL\n");
-    }else{
+    }else
+    {
         printf("parent addr: %p \n", parent);
     }
-    switch(node_mark){
+    switch(node_mark)
+    {
         case full:
             printf("mark: full\n");
             break;
@@ -46,20 +51,27 @@ void Node::unmark(){ node_mark = empty; }
 void Node::set_parent(Node *p){ parent = p; }
 
 //comparison to sort lists of marked nodes by marking so that they follow the form e...p...f
-bool compare_marking(Node *first, Node *second){
+bool compare_marking(Node *first, Node *second)
+{
     marking a = first->get_mark();
     marking b = second->get_mark();
-    if(a==b){
+    if(a==b)
+    {
         return false;
-    }else if(b==full){ // b = full and a!=b
+    }else if(b==full) // b = full and a!=b
+    { 
         return true;
-    }else if(b==partial){ // b = partial and a!=b
-        if(a==full){
+    }else if(b==partial) // b = partial and a!=b
+    { 
+        if(a==full)
+        {
             return false;
-        }else{
+        }else
+        {
             return true;
         }
-    }else{ // b = empty, and a!=b
+    }else // b = empty, and a!=b
+    { 
         return false;
     }
 }

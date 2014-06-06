@@ -8,7 +8,9 @@
 static bool test_leaks = false;
 
 
-Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist): Node(){
+Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist)
+    : Node()
+{
     if(test_leaks){ printf("LEAF ++\n"); }
     parent = p;
     value = v;
@@ -17,16 +19,18 @@ Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist): Node(){
     leaf_list_ptr = &leaflist.back();
 }
 
-Leaf::Leaf(int v, std::list<Leaf*> &leaflist): Node(){
+Leaf::Leaf(int v, std::list<Leaf*> &leaflist)
+    : Node()
+{
     if(test_leaks){ printf("LEAF ++\n"); }
-    parent = NULL;
     value = v;
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
 }
 
 
-Leaf::~Leaf(){
+Leaf::~Leaf()
+{
     //follow pointer to the leaflist entry to null it's pointer
     if(test_leaks){  printf("LEAF -- \n"); }
     if(leaf_list_ptr!=NULL){
@@ -36,7 +40,8 @@ Leaf::~Leaf(){
     
 }
 
-void Leaf::print(){
+void Leaf::print()
+{
     printf("========= node-type: LEAF NODE ======== \n");
     Node::print();
     printf("value: %d\n\n", value);
@@ -45,7 +50,8 @@ void Leaf::mark(){ node_mark = full;}
 int Leaf::get_value(){ return value; }
 void Leaf::unmark(){ node_mark = empty; }
 
-std::string Leaf::print_expression(bool print_mark /*false*/){
+std::string Leaf::print_expression(bool print_mark /*false*/)
+{
     std::string result = "";
     if(print_mark){
         switch(node_mark){
@@ -64,7 +70,8 @@ std::string Leaf::print_expression(bool print_mark /*false*/){
     return result;
 }
 
-void Leaf::update_depth(){
+void Leaf::update_depth()
+{
     if(parent==NULL){
         depth = 0;
     }else{
@@ -72,7 +79,8 @@ void Leaf::update_depth(){
     }
 }
 
-bool contains(std::vector<int> vec, int v){
+bool contains(std::vector<int> vec, int v)
+{
     for(size_t i=0; i<vec.size(); ++i){
         if(v==vec[i]){
             return true;
