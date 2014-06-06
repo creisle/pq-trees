@@ -33,11 +33,12 @@ public:
 	{
         //std::vector<int> v = {1, 2, 3};
         //PQTree::PQTree tree(v);
+        int count = Leaf::get_leaflist_size();
         int n = 5;
         for(int i=0; i<n; i++){
-            Leaf *lf = new Leaf(i);
+            new Leaf(i);
         }
-        int count = 6;
+        count = Leaf::get_leaflist_size() - count;
         
         CPPUNIT_ASSERT_EQUAL(n, count);
 	}
@@ -74,7 +75,7 @@ public:
 int main( int argc, char **argv)
 {
     std::vector<int> v = {1, 2, 3};
-    PQTree::PQTree tree(v);
+    PQTree tree(v);
     CppUnit::TextUi::TestRunner runner;
     runner.addTest( ExampleTests::suite() );
     runner.run();
