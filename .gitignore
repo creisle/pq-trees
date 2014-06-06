@@ -7,3 +7,11 @@ test
 practice
 
 example
+
+*.exe.*
+
+random
+
+*.o
+
+*.exe
