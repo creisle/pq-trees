@@ -10,7 +10,7 @@ example
 
 *.exe.*
 
-random
+random.txt
 
 *.o
 
