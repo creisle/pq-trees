@@ -12,12 +12,14 @@
 #include "PQTree.h"
 static bool follow = false; //use this to find bugs. prints out function names when a function is executed
 
+bool contains(std::vector<int> vec, int v);
+
 PQTree::PQTree(){
     root = NULL;
 }
 
 PQTree::PQTree(std::vector<int> leaves){
-    root = new PQnode(leaves);
+    root = new PQnode(leaves, leaflist);
 }
 
 PQTree::PQTree(std::string const expr){
@@ -48,7 +50,7 @@ void PQTree::print(){
 //use for planatiry testing
 //input vector of ints represents the leaves of the new universal tree
 bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in){
-    if(follow){ printf("PQTree::reduce_on(int value, std::vector<int> tree_in)\n"); }
+    if(follow){ printf("PQTree::reduce_and_replace(int value, std::vector<int> tree_in)\n"); }
     
     //put the value inside a vector
     std::vector<int> values;
@@ -59,9 +61,9 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in){
     
     Node *child;
     if(tree_in.size()==1){
-        child = new Leaf(tree_in[0]);
+        child = new Leaf(tree_in[0], leaflist);
     }else{
-        child = new PQnode(tree_in);
+        child = new PQnode(tree_in, leaflist);
     }
     if(!replace_full_with(child)){ return false; }
     
@@ -80,11 +82,14 @@ PQnode* PQTree::reduce(std::vector<int> values){
         if(subroot->reduce()){
             return subroot;
         }
+    }else{
+        fprintf(stderr, "pertinent subroot not found, could be invalid leaf values\n");
     }
     return NULL;
 }
 
 bool PQTree::set_consecutive(std::vector<int> values){
+    if(follow){ printf("PQTree::set_consecutive(std::vector<int> values)\n"); }
     PQnode *subroot = reduce(values);
     if(subroot==NULL){ return false; }
     
@@ -97,7 +102,7 @@ bool PQTree::replace_full_with(Node *child){
     
     Node* parent = NULL;
     if(child==NULL){ return false; }
-    std::list<Leaf*> fulls = Leaf::get_pertinent();
+    std::list<Leaf*> fulls = get_pertinent();
     
     for(std::list<Leaf*>::iterator it=fulls.begin(); it!=fulls.end(); ++it){
         if(parent){
@@ -132,7 +137,7 @@ PQnode* PQTree::mark(std::vector<int> v){
     
     if(follow){ printf("PQTree::mark(int v)\n"); }
     
-    std::list<Leaf*> fulls = Leaf::mark_pertinent(v); //mark the full leaves based on the input values
+    std::list<Leaf*> fulls = mark_pertinent(v); //mark the full leaves based on the input values
         
     //now find the parents of all the full leaves. add to the partials list but do not add duplicates
     std::list<PQnode*> partials;
@@ -184,9 +189,9 @@ PQnode* PQTree::mark(std::vector<int> v){
 }
 
 //prints an expression that represents the current tree. {} are p nodes, [] are qnodes
-void PQTree::print_expression(bool mark/*false*/){
-    root->print_expression(mark);
-    printf("\n");
+std::string PQTree::print_expression(bool mark/*false*/){
+    std::string result = root->print_expression(mark);
+    return result;
 }
 
 
@@ -229,7 +234,7 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i){
                     while(expr[i]!=' '&&expr[i]!=']'&&expr[i]!='}'&&i<expr.length()){
                         num += expr[i++];
                     }
-                    lf = new Leaf(rt, atoi(num.c_str()));
+                    lf = new Leaf(rt, atoi(num.c_str()), leaflist);
                     rt->link_child(lf);
                 }
                 break;
@@ -246,7 +251,40 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i){
 }
 
 
+std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec){
+    if(follow){ printf("PQTree::mark_pertinent(std::vector<int> vec)\n"); }
+    std::list<Leaf*> fulls;
+    std::list<Leaf*>::iterator it=leaflist.begin();
+    while(it!=leaflist.end()){
+        if((*it)==NULL){
+            it = leaflist.erase(it);
+        }else{
+            if(contains(vec, (*it)->get_value())){
+                (*it)->mark();
+                fulls.push_back((*it));
+            }
+            ++it;
+        }
+    }
+    return fulls;
+}
 
+std::list<Leaf*> PQTree::get_pertinent(){
+    if(follow){ printf("PQTree::get_pertinent()\n"); }
+    std::list<Leaf*> fulls;
+    std::list<Leaf*>::iterator it=leaflist.begin();
+    while(it!=leaflist.end()){
+        if((*it)==NULL){
+            it = leaflist.erase(it);
+        }else{
+            if((*it)->get_mark()==full){
+                fulls.push_back((*it)); 
+            }
+            ++it;
+        }
+    }
+    return fulls;
+}
 
 
 

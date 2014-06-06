@@ -14,10 +14,10 @@ PQnode::PQnode(): Node(){
     type = pnode;
 }
 
-PQnode::PQnode(std::vector<int> leaves, nodetype t/*pnode*/): Node(){
+PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*pnode*/): Node(){
     if(test_leaks){ printf("PQNODE ++\n");}
     for(size_t i=0; i<leaves.size(); ++i){
-        Leaf *lf = new Leaf(this, leaves[i]);
+        Leaf *lf = new Leaf(this, leaves[i], leaflist);
         children.push_back(lf);
     }
     set_type(t);
@@ -95,35 +95,37 @@ void PQnode::unmark(){ //passes by ref
     }
 }
 
-void PQnode::print_expression(bool m/*false*/){
+std::string PQnode::print_expression(bool m/*false*/){
+    std::string result = "";
     if(m){
         switch(node_mark){
             case full:
-                printf("f:");
+                result += "f:";
                 break;
             case empty:
-                printf("e:");
+                result += "e:";
                 break;
             case partial:
-                printf("p:");
+                result += "p:";
                 break;
         }
     }
     if(type==qnode){
-        printf("[");
+        result += "[";
     }else{
-        printf("{");
+        result += "{";
     }
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it){
-        printf(" ");
-        (*it)->print_expression(m);
-        printf(" ");
+        result += " ";
+        result += (*it)->print_expression(m);
+        result += " ";
     }
     if(type==qnode){
-        printf("]");
+        result += "]";
     }else{
-        printf("}");
+        result += "}";
     }
+    return result;
 }
 
 bool PQnode::reduce(){

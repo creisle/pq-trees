@@ -28,7 +28,7 @@ class PQnode: public Node{
     public:
         //constructors and deconstructor
         PQnode();
-        PQnode(std::vector<int> leaves, nodetype t = pnode);
+        PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t = pnode);
         virtual ~PQnode();
         
         //utility functions for the children
@@ -52,7 +52,7 @@ class PQnode: public Node{
         void set_type(nodetype t);
         
         //mainly for testing
-        void print_expression(bool m = false);
+        std::string print_expression(bool m = false);
         void print();
         
 };

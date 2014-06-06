@@ -5,12 +5,10 @@
 
 #include "Leaf.h"
 
-bool contains(std::vector<int> vec, int v);
-
 static bool test_leaks = false;
-static std::list<Leaf*> leaflist;
 
-Leaf::Leaf(Node *p, int v): Node(){
+
+Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist): Node(){
     if(test_leaks){ printf("LEAF ++\n"); }
     parent = p;
     value = v;
@@ -19,7 +17,7 @@ Leaf::Leaf(Node *p, int v): Node(){
     leaf_list_ptr = &leaflist.back();
 }
 
-Leaf::Leaf(int v): Node(){
+Leaf::Leaf(int v, std::list<Leaf*> &leaflist): Node(){
     if(test_leaks){ printf("LEAF ++\n"); }
     parent = NULL;
     value = v;
@@ -47,21 +45,23 @@ void Leaf::mark(){ node_mark = full;}
 int Leaf::get_value(){ return value; }
 void Leaf::unmark(){ node_mark = empty; }
 
-void Leaf::print_expression(bool print_mark /*false*/){
+std::string Leaf::print_expression(bool print_mark /*false*/){
+    std::string result = "";
     if(print_mark){
         switch(node_mark){
             case full:
-                printf("f:");
+                result += "f:";
                 break;
             case partial:
-                printf("p:");
+                result += "p:";
                 break;
             case empty:
-                printf("e:");
+                result += "e:";
                 break;
         }
     }
-    printf("%d", value);
+    result += std::to_string(value);
+    return result;
 }
 
 void Leaf::update_depth(){
@@ -81,42 +81,6 @@ bool contains(std::vector<int> vec, int v){
     return false;
 }
 
-std::list<Leaf*> Leaf::mark_pertinent(std::vector<int> vec){
-    std::list<Leaf*> fulls;
-    std::list<Leaf*>::iterator it=leaflist.begin();
-    while(it!=leaflist.end()){
-        if((*it)==NULL){
-            it = leaflist.erase(it);
-        }else{
-            if(contains(vec, (*it)->get_value())){
-                (*it)->mark();
-                fulls.push_back((*it));
-            }
-            ++it;
-        }
-    }
-    return fulls;
-}
-
-std::list<Leaf*> Leaf::get_pertinent(){
-    std::list<Leaf*> fulls;
-    std::list<Leaf*>::iterator it=leaflist.begin();
-    while(it!=leaflist.end()){
-        if((*it)==NULL){
-            it = leaflist.erase(it);
-        }else{
-            if((*it)->get_mark()==full){
-                fulls.push_back((*it)); 
-            }
-            ++it;
-        }
-    }
-    return fulls;
-}
-
-size_t Leaf::get_leaflist_size(){
-    return leaflist.size();
-}
     
 
 

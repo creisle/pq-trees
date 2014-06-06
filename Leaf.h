@@ -10,6 +10,7 @@
 
 //dependencies
 #include "Node.h"
+#include <string>
 
 class Leaf: public Node{
     
@@ -18,13 +19,13 @@ class Leaf: public Node{
         Leaf **leaf_list_ptr;
     public:
         //constructors and destructors
-        Leaf(Node *p, int v);
-        Leaf(int v);
+        Leaf(Node *p, int v, std::list<Leaf*> &leaflist);
+        Leaf(int v, std::list<Leaf*> &leaflist);
         virtual ~Leaf();
         
         //testing functions
         void print();
-        void print_expression(bool m = false);
+        std::string print_expression(bool m = false);
         
         //update and setters
         void mark();
@@ -34,9 +35,9 @@ class Leaf: public Node{
         //getters
         int get_value();
         
-        static std::list<Leaf*> get_pertinent();
-        static std::list<Leaf*> mark_pertinent(std::vector<int> values);
-        static size_t get_leaflist_size();
+        //static std::list<Leaf*> get_pertinent();
+        //static std::list<Leaf*> mark_pertinent(std::vector<int> values);
+        //static size_t get_leaflist_size();
 };
 
 #endif

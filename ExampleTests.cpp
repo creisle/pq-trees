@@ -9,39 +9,20 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include "PQTree.h"
+#include <stdlib.h>
+#include <sstream>
 
 class ExampleTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE( ExampleTests );
-	CPPUNIT_TEST( example );
-	CPPUNIT_TEST( anotherExample );
-	CPPUNIT_TEST( testEquals );
+    CPPUNIT_TEST( testPlanar );
+    CPPUNIT_TEST( testConsectuive );
 	CPPUNIT_TEST_SUITE_END();
 
 	double m_value1;
 	double m_value2;
 
 public:
-	void example()
-	{
-	  CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, 1.1, 0.05 );
-	  CPPUNIT_ASSERT( 1 == 0 );
-	  CPPUNIT_ASSERT( 1 == 1 );
-	}
-
-	void anotherExample()
-	{
-        //std::vector<int> v = {1, 2, 3};
-        //PQTree::PQTree tree(v);
-        int count = Leaf::get_leaflist_size();
-        int n = 5;
-        for(int i=0; i<n; i++){
-            new Leaf(i);
-        }
-        count = Leaf::get_leaflist_size() - count;
-        
-        CPPUNIT_ASSERT_EQUAL(n, count);
-	}
 
 	void setUp()
 	{
@@ -52,32 +33,64 @@ public:
     void tearDown()
     {
     }
-
-
-	void testEquals()
-	{
-	  long* l2 = new long(12);
-      long* l1 = new long(11);
-
-	  CPPUNIT_ASSERT_EQUAL( 12, 12 );
-	  CPPUNIT_ASSERT_EQUAL( 12L, 12L );
-	  CPPUNIT_ASSERT_EQUAL( *l1, *l2 );
-
-	  delete l1;
-	  delete l2;
-
-	  CPPUNIT_ASSERT( 12L == 12L );
-	  CPPUNIT_ASSERT_EQUAL( 12, 13 );
-	  CPPUNIT_ASSERT_DOUBLES_EQUAL( 12.0, 11.99, 0.5 );
-	}
+    
+    void testPlanar()
+    {
+        //adjacency matrix of an st-numbered input graph
+        std::vector< std::vector<int> > adj = {
+            {2, 3, 4, 5, 6},
+            {3, 6, 7},
+            {4, 7},
+            {5, 7},
+            {7},
+            {7},
+            {0} // 0 is not actually a node. but just so we can check the final reduction
+        };
+        
+        PQTree tree(adj[0]);
+        
+        for(size_t i=1; i<adj.size(); i++){
+            int curr = (int)(i+1);
+            std::vector<int> v = adj[i];
+            if(!tree.reduce_and_replace(curr, v)){ fprintf(stderr, "error in building the and reducing the tree\n"); exit(1); }
+        }
+        std::string expected = "{ 0 }";
+        std::string message = "expected { 0 } but found "+tree.print_expression()+"\n";
+        CPPUNIT_ASSERT_MESSAGE( message, expected.compare(tree.print_expression())==0);
+    }
+    
+    void testConsectuive() //purpose: tests a consectutive ones matrix example
+    {
+        bool pass = true;
+        std::vector< std::vector<int> > mat = {
+            {1, 2, 5}, //values that are one in our matrix
+            {3, 4, 5},
+            {1, 5},
+            {3, 4},
+            {2, 3}
+        };
+        PQTree tree("{1, 2, 3, 4, 5}");
+        
+        for(size_t i=0; i<mat.size(); ++i){
+            if(!tree.set_consecutive(mat[i])){ pass = false; break;}
+        }
+        CPPUNIT_ASSERT_MESSAGE( "Consecutive ordering example failed\n ", pass);
+    }
+    
+    void testLeafList()
+    {
+        
+    }
 };
 
 int main( int argc, char **argv)
 {
-    std::vector<int> v = {1, 2, 3};
-    PQTree tree(v);
+    
     CppUnit::TextUi::TestRunner runner;
     runner.addTest( ExampleTests::suite() );
     runner.run();
+    
+    
+    
     return 0;
 }

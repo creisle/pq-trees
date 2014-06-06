@@ -23,10 +23,17 @@ class Node;
 class PQTree{
     private:
         PQnode *root; //pointer to the root of the PQ tree
+        std::list<Leaf*> leaflist;
+        
+        //private functions
         Node* build_from_expr(std::string const expr, size_t &i);
         PQnode* mark(std::vector<int> values);
         bool replace_full_with(Node *child);
         PQnode* reduce(std::vector<int> values);
+        
+        //private leaflist functions
+        std::list<Leaf*> get_pertinent();
+        std::list<Leaf*> mark_pertinent(std::vector<int> values);
         
     public:
         PQTree();
@@ -36,13 +43,15 @@ class PQTree{
         
         //printing and testing functions
         void print(); //iterates recusively through the tree and prints out leaves and nodes
-        void print_expression(bool mark = false); //prints an expression respresenting the tree structure and contents
+        std::string print_expression(bool mark = false); //prints an expression respresenting the tree structure and contents
         void print_leaflist(bool detail = false); //prints the contents of the leaflist
         
         //reduction opertaions
         bool reduce_and_replace(int value, std::vector<int> v); //planarity testing
         bool set_consecutive(std::vector<int> values); //for testing consectutive ones of a matrix
         
+        //leaflist functions
+        size_t get_leaflist_size();
 };
 
 #endif

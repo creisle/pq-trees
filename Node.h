@@ -26,7 +26,7 @@ class Node{
         Node();
         virtual ~Node(){} //destructor. use this to get rid of crap "new"'d inside the constructor
         virtual void print() = 0; //now this is pure virtual
-        virtual void print_expression(bool m = false) = 0;
+        virtual std::string print_expression(bool m = false) = 0;
         virtual void update_depth() = 0;
         
         //getters
