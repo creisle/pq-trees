@@ -33,7 +33,8 @@ Leaf::~Leaf()
 {
     //follow pointer to the leaflist entry to null it's pointer
     if(test_leaks){  printf("LEAF -- \n"); }
-    if(leaf_list_ptr!=NULL){
+    if(leaf_list_ptr!=NULL)
+    {
         *leaf_list_ptr = NULL;
         leaf_list_ptr = NULL;
     }
@@ -53,8 +54,10 @@ void Leaf::unmark(){ node_mark = empty; }
 std::string Leaf::print_expression(bool print_mark /*false*/)
 {
     std::string result = "";
-    if(print_mark){
-        switch(node_mark){
+    if(print_mark)
+    {
+        switch(node_mark)
+        {
             case full:
                 result += "f:";
                 break;
@@ -72,17 +75,21 @@ std::string Leaf::print_expression(bool print_mark /*false*/)
 
 void Leaf::update_depth()
 {
-    if(parent==NULL){
+    if(parent==NULL)
+    {
         depth = 0;
-    }else{
+    }else
+    {
         depth = parent->get_depth() + 1;
     }
 }
 
 bool contains(std::vector<int> vec, int v)
 {
-    for(size_t i=0; i<vec.size(); ++i){
-        if(v==vec[i]){
+    for(size_t i=0; i<vec.size(); ++i)
+    {
+        if(v==vec[i])
+        {
             return true;
         }
     }

@@ -27,9 +27,11 @@ PQTree::PQTree(std::vector<int> leaves)
 PQTree::PQTree(std::string const expr)
 {
     size_t i=0;
-    if(PQnode *tmp = dynamic_cast<PQnode*>(build_from_expr(expr, i))){
+    if(PQnode *tmp = dynamic_cast<PQnode*>(build_from_expr(expr, i)))
+    {
         root = tmp;
-    }else{
+    }else
+    {
         root = NULL;
         fprintf(stderr, "cannot initialize a pq tree with an invalid expression\n");
         exit(1);
@@ -45,9 +47,11 @@ PQTree::~PQTree()
 //iterates recusively through the tree and prints out leaves and nodes
 void PQTree::print()
 {
-    if(root==NULL){
+    if(root==NULL)
+    {
         printf("Empty tree\n");
-    }else{
+    }else
+    {
         root->print();
     }
 }
@@ -66,9 +70,11 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
     if(subroot==NULL){ return false; }
     
     Node *child;
-    if(tree_in.size()==1){
+    if(tree_in.size()==1)
+    {
         child = new Leaf(tree_in[0], leaflist);
-    }else{
+    }else
+    {
         child = new PQnode(tree_in, leaflist);
     }
     if(!replace_full_with(child)){ return false; }
@@ -83,13 +89,15 @@ PQnode* PQTree::reduce(std::vector<int> values)
     if(follow){ printf("PQTree::reduce(int value)\n"); }
     
     PQnode* subroot = mark(values); //pertinent subroot
-    print_expression(true);
     if(follow){ printf("PQTree::reduce(int value). marked as "); print_expression(true); }
-    if(subroot!=NULL){
-        if(subroot->reduce()){
+    if(subroot!=NULL)
+    {
+        if(subroot->reduce())
+        {
             return subroot;
         }
-    }else{
+    }else
+    {
         fprintf(stderr, "pertinent subroot not found, could be invalid leaf values\n");
     }
     return NULL;
@@ -113,23 +121,30 @@ bool PQTree::replace_full_with(Node *child)
     if(child==NULL){ return false; }
     std::list<Leaf*> fulls = get_pertinent();
     
-    for(std::list<Leaf*>::iterator it=fulls.begin(); it!=fulls.end(); ++it){
-        if(parent){
-            if((*it)->get_parent()!=parent){
+    for(std::list<Leaf*>::iterator it=fulls.begin(); it!=fulls.end(); ++it)
+    {
+        if(parent)
+        {
+            if((*it)->get_parent()!=parent)
+            {
                 fprintf(stderr, "not all full nodes have the same parent\n");
                 return false;
             }
-        }else{
+        }else
+        {
             parent = (*it)->get_parent();
         }
     }
     
-    if(PQnode* temp = dynamic_cast<PQnode*>(parent)){
-        if(!(temp->condense_and_replace(child))){
+    if(PQnode* temp = dynamic_cast<PQnode*>(parent))
+    {
+        if(!(temp->condense_and_replace(child)))
+        {
             fprintf(stderr, "condense failed\n");
             return false;
         }
-        if(temp->count_children()<3){
+        if(temp->count_children()<3)
+        {
             temp->set_type(pnode);
         }
         
@@ -143,59 +158,64 @@ bool PQTree::replace_full_with(Node *child)
  * returns the subroot of the pertinent subtree, otherwise NULL if an error occurs
  ********************************************************************************/
 PQnode* PQTree::mark(std::vector<int> v)
-{
-    
+{   
     if(follow){ printf("PQTree::mark(int v)\n"); }
     
     std::list<Leaf*> fulls = mark_pertinent(v); //mark the full leaves based on the input values
-        
-    //now find the parents of all the full leaves. add to the partials list but do not add duplicates
-    std::list<PQnode*> partials;
-    for(std::list<Leaf*>::iterator k = fulls.begin(); k!=fulls.end(); ++k){
+    std::list<PQnode*> partials; 
+    
+    for(std::list<Leaf*>::iterator k = fulls.begin(); k!=fulls.end(); ++k)
+    {
         PQnode *p = dynamic_cast<PQnode*>((*k)->get_parent());
-        if(p==NULL){ return NULL;} //this is the parent we want to add to the list of potential partials
-        //add it into the partials list by inserting it at the correct position based on decreasing depth
-        if(partials.empty()){
-            partials.push_back(p);
-        }else{
-            for(std::list<PQnode*>::iterator it=partials.begin(); it!=partials.end(); ++it){ //iterates through our list of partials
-                if((*it)->get_depth()>=p->get_depth()){
-                    if(p==(*it)){
-                        break;
-                    }
-                }else{
-                    partials.insert(it, p);
-                }
-            }
+        if(p==NULL) //this is the parent we want to add to the list of potential partials
+        {
+            return NULL;
         }
+        
+        //add it into the partials list by inserting it at the correct position based on decreasing depth
+        add_unique_by_depth(p, partials);
     }
+    fulls.clear();
     
     //at this point we have a list of potential partials sorted by depth with no duplicates
     //now we need to mark these nodes.... and then their parents until there is only one node left in the partials list
-    while(partials.size()>1){
-        
+    while(partials.size()>1)
+    {
         PQnode *curr = partials.front();//always deal with the front element first
-        curr->mark_node(); //mark the node
+        curr->mark(); //mark the node
         PQnode *p = (PQnode*)curr->get_parent(); //any parent in the tree will never be a leaf since they cannot have children. therefore this casting is safe
         partials.pop_front(); //remove the curr node and destroy the reference
         
-        //add in the appropriate place. 
-        for(std::list<PQnode*>::iterator it=partials.begin(); it!=partials.end(); ++it){ //iterates through our list of partials
-            if((*it)->get_depth()>=p->get_depth()){
-                if(p==(*it)){
-                    break;
-                }
-            }else{
-                partials.insert(it, p);
-            }
-        }
+        add_unique_by_depth(p, partials);
     }
-    if(!partials.empty()){
-        partials.front()->mark_node();
+    if(!partials.empty())
+    {
+        partials.front()->mark();
         return partials.front();
     }
     return NULL;
     
+}
+
+//adds only unique nodes
+//adds the node so that the partials list maintains the by decreasing depth property
+void PQTree::add_unique_by_depth(PQnode *p, std::list<PQnode*> &partials){
+    if(partials.empty())
+    {
+        partials.push_back(p);
+    }else
+    {
+        for(std::list<PQnode*>::iterator it=partials.begin(); it!=partials.end(); ++it) //iterates through our list of partials
+        { 
+            if((*it)->get_depth()>=p->get_depth())
+            {
+                if(p==(*it)){ break; }
+            }else
+            {
+                partials.insert(it, p);
+            }
+        }
+    }
 }
 
 //prints an expression that represents the current tree. {} are p nodes, [] are qnodes
@@ -217,33 +237,44 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i)
     PQnode *rt = NULL;
     Leaf *lf = NULL;
     
-    while(reading&&i<expr.length()){
-        switch(state){
+    while(reading&&i<expr.length())
+    {
+        switch(state)
+        {
             case 0:
-                if(isspace(expr[i])){ //ignore whitespace
+                if(isspace(expr[i])) //ignore whitespace
+                {
                     ++i;
-                }else if(expr[i]=='{'||expr[i]=='['){
-                    if(expr[i]=='['){
+                }else if(expr[i]=='{'||expr[i]=='[')
+                {
+                    if(expr[i]=='[')
+                    {
                         isqnode = true;
                     }
                     state = 1; ++i; rt = new PQnode();
-                }else{
+                }else
+                {
                     return NULL;
                 }
                 break;
             case 1: //started a node. linking children
-                if(isspace(expr[i])){ //ignore whitespace
+                if(isspace(expr[i])) //ignore whitespace
+                { 
                     ++i;
-                }else if(expr[i]=='{'||expr[i]=='['){ //start the next pnode
+                }else if(expr[i]=='{'||expr[i]=='[') //start the next pnode
+                { 
                     Node *child = build_from_expr(expr, i);
                     rt->link_child(child);
                     ++i;
-                }else if(expr[i]=='}'||expr[i]==']'){
+                }else if(expr[i]=='}'||expr[i]==']')
+                {
                     reading = false;
-                }else if(isdigit(expr[i])){
+                }else if(isdigit(expr[i]))
+                {
                     //get the number terminated by a comma
                     std::string num = "";
-                    while(expr[i]!=' '&&expr[i]!=']'&&expr[i]!='}'&&i<expr.length()){
+                    while(expr[i]!=' '&&expr[i]!=']'&&expr[i]!='}'&&i<expr.length())
+                    {
                         num += expr[i++];
                     }
                     lf = new Leaf(rt, atoi(num.c_str()), leaflist);
@@ -254,9 +285,11 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i)
                 return NULL;
         }
     }
-    if(isqnode&&rt->count_children()>2){
+    if(isqnode&&rt->count_children()>2)
+    {
         rt->set_type(qnode);
-    }else if(rt->count_children()==1){
+    }else if(rt->count_children()==1)
+    {
         return lf;
     }
     return rt;
@@ -268,10 +301,13 @@ std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec)
     if(follow){ printf("PQTree::mark_pertinent(std::vector<int> vec)\n"); }
     std::list<Leaf*> fulls;
     std::list<Leaf*>::iterator it=leaflist.begin();
-    while(it!=leaflist.end()){
-        if((*it)==NULL){
+    while(it!=leaflist.end())
+    {
+        if((*it)==NULL)
+        {
             it = leaflist.erase(it);
-        }else{
+        }else
+        {
             if(contains(vec, (*it)->get_value())){
                 (*it)->mark();
                 fulls.push_back((*it));
@@ -285,13 +321,18 @@ std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec)
 std::list<Leaf*> PQTree::get_pertinent()
 {
     if(follow){ printf("PQTree::get_pertinent()\n"); }
+    
     std::list<Leaf*> fulls;
     std::list<Leaf*>::iterator it=leaflist.begin();
-    while(it!=leaflist.end()){
-        if((*it)==NULL){
+    while(it!=leaflist.end())
+    {
+        if((*it)==NULL)
+        {
             it = leaflist.erase(it);
-        }else{
-            if((*it)->get_mark()==full){
+        }else
+        {
+            if((*it)->get_mark()==full)
+            {
                 fulls.push_back((*it)); 
             }
             ++it;

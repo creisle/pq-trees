@@ -26,15 +26,18 @@ class PQTree
         PQnode *root; //pointer to the root of the PQ tree
         std::list<Leaf*> leaflist;
         
-        //private functions
+        //testing
         Node* build_from_expr(std::string const expr, size_t &i);
+        
+        //marking
         PQnode* mark(std::vector<int> values);
+        void add_unique_by_depth(PQnode *p, std::list<PQnode*> &parents);
+        std::list<Leaf*> mark_pertinent(std::vector<int> values);
+        
+        //reduction
         bool replace_full_with(Node *child);
         PQnode* reduce(std::vector<int> values);
-        
-        //private leaflist functions
         std::list<Leaf*> get_pertinent();
-        std::list<Leaf*> mark_pertinent(std::vector<int> values);
         
     public:
         PQTree();

@@ -25,6 +25,10 @@ class PQnode: public Node
         bool preduce(bool direction);
         bool reduce(bool direction); //for descedants of the pertinent subroot
         Node* group_children(std::list<Node*> group);
+        size_t grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<Node*> &tmp);
+        bool promote_partial_children(std::list<Node*>::iterator &it);
+        //funcitons for marking
+        size_t skip_marks(std::list<Node*>::iterator &itr, marking mark);
         
     public:
         //constructors and deconstructor
@@ -39,7 +43,7 @@ class PQnode: public Node
         
         
         //to do with the tree
-        int mark_node();
+        int mark();
         void unmark();
         bool condense_and_replace(Node *child);
         bool link_child(Node *child); //DANGEROUS!

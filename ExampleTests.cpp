@@ -139,9 +139,7 @@ public:
 class PQnodeTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE( PQnodeTests );
-    CPPUNIT_TEST( testLeafList );
     CPPUNIT_TEST( test_marking );
-    CPPUNIT_TEST( test_update_depth );
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -154,19 +152,26 @@ public:
     {
     }
     
-    void testLeafList() //tests adding leaves to ensure they add to the list you pass in correctly
-    {
+    void test_marking(){
+        //mock a node with one partial child and two full and two empty
+        std::vector<int> v = {2, 2, 3, 4};
+        std::list<Leaf*> lst;
+        PQnode *root = new PQnode(v, lst); // {2, 2, 3, 4}
+        PQnode *child = new PQnode(v, lst); // {2, 2, 3, 4}
+        root->link_child(child); // {2, 2, 3, 4 {2, 2, 3, 4} }
         
-    }
-    
-    void test_marking() //tests the marking functionality of the leaf class
-    {
+        for(std::list<Leaf*>::iterator itr = lst.begin(); itr != lst.end(); ++itr) //mark the value = 2 children as full
+        {
+            if((*itr)->get_value()==2){
+                (*itr)->mark();
+            }
+        }
         
-    }
-    
-    void test_update_depth()
-    {
+        child->mark(); //mark the child
+        root->mark(); //mark the root
         
+        CPPUNIT_ASSERT_EQUAL(child->get_mark(), partial);
+        CPPUNIT_ASSERT_EQUAL(root->get_mark(), partial);
     }
 };
 
@@ -175,6 +180,7 @@ int main( int argc, char **argv)
     
     CppUnit::TextUi::TestRunner runner;
     runner.addTest( PQTreeTests::suite() );
+    runner.addTest( PQnodeTests::suite() );
     runner.addTest( LeafTests::suite() );
     runner.run();
     

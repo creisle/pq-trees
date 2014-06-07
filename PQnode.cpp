@@ -53,45 +53,96 @@ void PQnode::print()
     
 }
 
-//check the children in order to mark the node
-int PQnode::mark_node()
+//runs through the list from the current position in the child list until it hits a mark that isn't the specified type
+//updates the position of the iterator that is passed in
+//returns the number of elements found with that marking
+size_t PQnode::skip_marks(std::list<Node*>::iterator &itr, marking m)
 {
-    size_t fcount = 0;
+    size_t count = 0;
+    while(itr!=children.end())
+    {
+        if((*itr)->get_mark()==m)
+        {
+            ++count;
+            ++itr;
+        }else //stops when it finds any node that doesn't have the mark we expect
+        {
+            return count;
+        }
+    }
+    return count;
+}
+
+//runs through the list from the current position in the child list until it hits a mark that isn't the specified type
+//updates the position of the iterator that is passed in
+//add to a list of elements found with that marking
+//returns the number of elements found with that marking
+size_t PQnode::grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<Node*> &tmp)
+{
+    size_t count = 0;
+    while(itr!=children.end())
+    {
+        if((*itr)->get_mark()==m)
+        {
+            tmp.push_back((*itr));
+            ++count;
+            ++itr;
+        }else //stops when it finds any node that doesn't have the mark we expect
+        {
+            return count;
+        }
+    }
+    return count;
+}
+
+//check the children in order to mark the node
+int PQnode::mark()
+{
+    size_t ecount = 0;
     size_t pcount = 0;
-    for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it)
+    size_t fcount = 0;
+    std::list<Node*>::iterator it;
+    if(type==pnode)
     {
-        switch((*it)->get_mark())
-        {
-            case full:
-                fcount++;
-                break;
-            case partial:
-                pcount++;
-                if(pcount>2)
-                {
-                    return -1;
-                }
-                break;
-            case empty: //if unlabelled, assume empty
-                break;
-        }
+        sort_children(); //puts the children in order of increasign full nodes: emptys....partials....fulls    
+        it = children.begin();
+        ecount += skip_marks(it, empty);
+        pcount += skip_marks(it, partial);
+        fcount += skip_marks(it, full);
+    }else //type = qnode
+    {
+        it = children.begin();
+        ecount += skip_marks(it, empty); //if none, returns 0
+        pcount += skip_marks(it, partial);
+        fcount += skip_marks(it, full);
+        pcount += skip_marks(it, partial);
+        ecount += skip_marks(it, empty);
     }
-    if(pcount>0)
+    
+    if(it!=children.end()) //didn't go through all the children, therefore this node is in an irreducible form
     {
-        node_mark = partial;
-    }else if(fcount>0)
-    {
-        if(fcount<children.size())
-        {
-            node_mark = partial;
-        }else
-        {
-            node_mark = full;
-        }
-    }else
-    {
-        node_mark = empty;
+        fprintf(stderr, "PQnode::mark: irreducible node found\n");
+        return -1;
     }
+    
+    if(pcount>2) //no node subroot or not may ever have more than 2 partial chidren
+    {
+        return -1;  
+    }else if(pcount>0) //any number of partial nodes results in a partial parent node
+    {
+        node_mark = partial; 
+    }else if(fcount>0&&ecount>0) //both full and empty nodes but no partials
+    {
+        node_mark = partial; 
+    }else if(fcount>0) //ecount and pcount must be 0
+    {
+        node_mark = full; 
+    }else //fcount and pcount must be 0
+    {
+        node_mark = empty; 
+    }
+    return 0;
+    
     return 0;
 }
 
@@ -177,24 +228,15 @@ bool PQnode::reduce_proot()
     if(follow){ printf("PQnode::reduce_proot()\n"); }
     
     std::list<Node*> empty_list;
-    std::list<Node*> partials_list;
+    std::list<Node*> partials_list; //can only ever have two elements, already resticed from marking
     std::list<Node*> sec_partials_list;
     std::list<Node*> full_list; //temporary list to store directed node stuff
     
     sort_children();
     std::list<Node*>::iterator it=children.begin();
-    while(it!=children.end()) //find all the empty children
-    { 
-        if((*it)->get_mark()==empty)
-        {
-            empty_list.push_back((*it));
-        }else
-        {
-            break;
-        }
-        ++it;
-    }
     
+    size_t ecount = grab_marks(it, empty, empty_list);
+    //size_t pcount = grab_marks(it, partial, partials_list);
     
     if(it!=children.end()) //deal with the first partial child
     { 
@@ -239,18 +281,7 @@ bool PQnode::reduce_proot()
         }
     }
     
-    //deal with the full nodes
-    while(it!=children.end()) //find all the full children
-    { 
-        if((*it)->get_mark()==full)
-        {
-            full_list.push_back((*it));
-        }else
-        {
-            return false;
-        }
-        ++it;
-    }    
+    size_t fcount = grab_marks(it, full, full_list);  
     
     
     children.clear();
@@ -262,7 +293,7 @@ bool PQnode::reduce_proot()
         return true;
     }
     //create the new qnode to house the full and partial children
-    if(!children.empty()) //has empty children
+    if(ecount>0) //has empty children
     { 
         PQnode *qtemp = new PQnode();
     
@@ -284,7 +315,7 @@ bool PQnode::reduce_proot()
         
         qtemp->set_type(qnode);
         //link the qnode to the parent node
-        qtemp->mark_node();
+        qtemp->mark();
         link_child(qtemp);
         
     }else //no empty children. make the subroot a qnode
@@ -312,25 +343,35 @@ bool PQnode::reduce_proot()
     
 }
 
+
 //check if the tree is reducible during the marking phase. will save a lot of headache
 bool PQnode::reduce_qroot()
 {
     if(follow){ printf("PQnode::reduce_qroot()\n"); }
     
-    //should be of the form e* p f* p e*
     std::list<Node*> partials_list;
     std::list<Node*>::iterator it=children.begin();
-    while(it!=children.end()) //skip the empty nodes
-    { 
-        if((*it)->get_mark()!=empty)
-        {
-            break;
-        }else
-        {
-            ++it;
-        }
+    skip_marks(it, empty);
+    
+    if(!promote_partial_children(it)) //first potential partial node
+    {
+        return false;
     }
-    //first potential partial node
+    
+    skip_marks(it, full); //skip the middle full nodes
+    
+    if(!promote_partial_children(it)) //next potential partial node
+    {
+        return false;
+    }
+    update_depth();
+    return true;
+}
+
+//iterator must be a part on the children list
+bool PQnode::promote_partial_children(std::list<Node*>::iterator &it){
+    //potential partial node
+    std::list<Node*> partials_list;
     if(it!=children.end())
     {
         PQnode *ch = dynamic_cast<PQnode*>(*it);
@@ -357,43 +398,6 @@ bool PQnode::reduce_qroot()
             ++it;
         }
     }
-    //skip the middle full nodes
-    while(it!=children.end())
-    {
-        if((*it)->get_mark()!=empty)
-        {
-            break;
-        }else
-        {
-            ++it;
-        }
-    }
-    
-    //next potential partial node
-    if(it!=children.end())
-    {
-        PQnode *ch = dynamic_cast<PQnode*>(*it);
-        if(ch&&(*it)->get_mark()==partial)
-        {
-            if(ch->reduce(false))
-            {
-                Node *temp = ch->pop_child();
-                while(temp!=NULL)
-                {
-                    partials_list.push_back(temp);
-                    temp = ch->pop_child();
-                }
-            }else
-            {
-                return false;
-            }
-            it = children.erase(it);
-            children.insert(it, group_children(partials_list));
-            delete ch;
-            partials_list.clear();
-        }
-    }
-    update_depth();
     return true;
 }
 
@@ -423,21 +427,12 @@ bool PQnode::preduce(bool direction)
     std::list<Node*> empty_list;
     std::list<Node*> partials_list;
     std::list<Node*> full_list; //temporary list to store directed node stuff
+    size_t ecount;
+    size_t fcount;
     
     sort_children();
     std::list<Node*>::iterator it=children.begin();
-    //it!=children.end(); ++it;
-    while(it!=children.end()) //find all the empty children
-    { 
-        if((*it)->get_mark()==empty)
-        {
-            empty_list.push_back((*it));
-        }else
-        {
-            break;
-        }
-        ++it;
-    }
+    ecount = grab_marks(it, empty, empty_list);
     
     if(it!=children.end()) //find the partial child
     { 
@@ -462,20 +457,12 @@ bool PQnode::preduce(bool direction)
         } 
     }
     
-    while(it!=children.end()) //find all the full children
-    { 
-        if((*it)->get_mark()==full)
-        {
-            full_list.push_back((*it));
-        }else{
-            return false;
-        }
-        ++it;
-    }
+    fcount = grab_marks(it, full, full_list);
+    
     children.clear(); //remove so we can add back in in the right order after the merging
     
-    //now group the children from the empty list into a pnode if necessary (more than 2)
-    link_child(group_children(empty_list));
+    
+    link_child(group_children(empty_list)); //now group the children from the empty list into a pnode if necessary (more than 2)
     
     if(!partials_list.empty())
     {
@@ -486,10 +473,9 @@ bool PQnode::preduce(bool direction)
         }
         partials_list.clear();
     }
-    //now finally the full node children. again you need to group them
-    link_child(group_children(full_list));
+    
+    link_child(group_children(full_list)); //now finally the full node children. again you need to group them
     set_type(qnode);
-    //printf("preduce done\n");
     return true;
 }
 
@@ -500,6 +486,7 @@ bool PQnode::qreduce(bool direction)
     std::list<Node*> empty_list;
     std::list<Node*> partials_list;
     std::list<Node*> full_list; //temporary list to store directed node stuff
+    size_t ecount;
     
     if(!children.empty())
     {
@@ -510,14 +497,7 @@ bool PQnode::qreduce(bool direction)
     }
     
     std::list<Node*>::iterator it=children.begin();
-    while(it!=children.end()) //skip all the empty children
-    { 
-        if((*it)->get_mark()!=empty)
-        {
-            break;
-        }
-        ++it;
-    }
+    ecount = skip_marks(it, empty);
     
     if(it!=children.end()) //find all the partial children and insert them in order into the qnode
     { 
@@ -544,15 +524,6 @@ bool PQnode::qreduce(bool direction)
             delete ch;
         } 
     }
-    
-    while(it!=children.end()) //skip all the full children
-    { 
-        if((*it)->get_mark()!=full)
-        {
-            return false;
-        }
-        ++it;
-    }
     return true;
 }
 
@@ -576,7 +547,7 @@ Node* PQnode::group_children(std::list<Node*> group)
         {
             temp->link_child(*it);
         }
-        temp->mark_node();
+        temp->mark();
         result = temp;
     }
     group.clear();
