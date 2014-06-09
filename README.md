@@ -22,6 +22,7 @@ PQTRee Expressions:
     leaf - any integer
 
 ![Alt text](tree_example.jpg "PQTree example")
+
 Figure 1. Example PQTree. Can be represented by the expression: { 5 1 3 [ 3 {2 4 } [ { 4 5 } 6 2 ] ] }
     
 Ways to use the trees?
