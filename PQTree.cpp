@@ -12,8 +12,6 @@
 #include "PQTree.h"
 static bool follow = false; //use this to find bugs. prints out function names when a function is executed
 
-bool contains(std::vector<int> vec, int v);
-
 PQTree::PQTree()
 {
     root = NULL;
@@ -44,7 +42,12 @@ PQTree::~PQTree()
     root = NULL;
 }
 
-//iterates recusively through the tree and prints out leaves and nodes
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: print()
+ * input: none
+ * purpose: recursively prints pertinent node information. for debugging
+ * return: none
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void PQTree::print()
 {
     if(root==NULL)
@@ -56,8 +59,16 @@ void PQTree::print()
     }
 }
 
-//use for planatiry testing
-//input vector of ints represents the leaves of the new universal tree
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: reduce(std::vector<int> values)
+ * input: value which we wish to be consecutive and an input vector of ints representing
+ *      the leaves of the new universal tree
+ * purpose: performs reductions on the tree based on the input vector. after reduction
+ *      replaces the full leaves with the new universal tree that was built from the
+ *      input vector
+ * return: false is an error occurs or the tree is irreducible, true otherwise
+ * note: use this for planarity testing
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
 {
     if(follow){ printf("PQTree::reduce_and_replace(int value, std::vector<int> tree_in)\n"); }
@@ -84,6 +95,13 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
     return true;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: reduce(std::vector<int> values)
+ * input: vector of values which we wish to be consecutive
+ * purpose: performs reductions on the tree based on the input vector. does not add
+ *      or remove any leaves from the tree
+ * return: false is an error occurs or the tree is irreducible, true otherwise
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 PQnode* PQTree::reduce(std::vector<int> values)
 {
     if(follow){ printf("PQTree::reduce(int value)\n"); }
@@ -103,6 +121,14 @@ PQnode* PQTree::reduce(std::vector<int> values)
     return NULL;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: set_consecutive(std::vector<int> values)
+ * input: vector of values which we wish to be consecutive
+ * purpose: performs reductions on the tree based on the input vector. does not add
+ *      or remove any leaves from the tree
+ * return: false is an error occurs or the tree is irreducible, true otherwise
+ * note: this is what we would use to find interval graphs
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool PQTree::set_consecutive(std::vector<int> values)
 {
     if(follow){ printf("PQTree::set_consecutive(std::vector<int> values)\n"); }
@@ -113,6 +139,14 @@ bool PQTree::set_consecutive(std::vector<int> values)
     return true;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: replace_full_with(Node *child)
+ * input: a pointer to the child node we want to insert
+ * purpose: occurs after tree reduction. finds the common parent of all of the "full"
+ *      leaves. removes the full leaves and replaces them with the input child node
+ *      while conserving the position
+ * return: false is an error occurs, true otherwise
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool PQTree::replace_full_with(Node *child)
 {
     if(follow){ printf("PQTree::replace_full_with(Node *child)\n"); }
@@ -152,11 +186,13 @@ bool PQTree::replace_full_with(Node *child)
     return true;
 }
 
-/*******************************************************************************
- * Function PQTree::mark(int value)
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: mark(std::vector<int> v)
+ * input: vector of values representing the Leaf values we wish to mark as full
  * purpose: marks the pertinent subtree
- * returns the subroot of the pertinent subtree, otherwise NULL if an error occurs
- ********************************************************************************/
+ * return: the pertinent subroot. returns NULL if an error occured or the current tree
+ *      is irreducible
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 PQnode* PQTree::mark(std::vector<int> v)
 {   
     if(follow){ printf("PQTree::mark(int v)\n"); }
@@ -182,7 +218,10 @@ PQnode* PQTree::mark(std::vector<int> v)
     while(partials.size()>1)
     {
         PQnode *curr = partials.front();//always deal with the front element first
-        curr->mark(); //mark the node
+        if(!(curr->mark())) //mark the node
+        {
+            return NULL;
+        }
         PQnode *p = (PQnode*)curr->get_parent(); //any parent in the tree will never be a leaf since they cannot have children. therefore this casting is safe
         partials.pop_front(); //remove the curr node and destroy the reference
         
@@ -190,15 +229,22 @@ PQnode* PQTree::mark(std::vector<int> v)
     }
     if(!partials.empty())
     {
-        partials.front()->mark();
+        if( !(partials.front()->mark()) )
+        {
+            return NULL;
+        }
         return partials.front();
     }
     return NULL;
     
 }
 
-//adds only unique nodes
-//adds the node so that the partials list maintains the by decreasing depth property
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: add_unique_by_depth(PQnode *p, std::list<PQnode*> &partials)
+ * input: list of nodes we want to add to, pointer to the node we want to add
+ * purpose: adds a node to the list iff it is not already in the list. inserts into the
+ *      list and maintains the decreasing depth by property of the list
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void PQTree::add_unique_by_depth(PQnode *p, std::list<PQnode*> &partials){
     if(partials.empty())
     {
@@ -218,7 +264,13 @@ void PQTree::add_unique_by_depth(PQnode *p, std::list<PQnode*> &partials){
     }
 }
 
-//prints an expression that represents the current tree. {} are p nodes, [] are qnodes
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: print_expression(bool mark)
+ * input: boolean value determining whether or not to print out the more verbose expression
+ *      string that also gives the marking "value" for each node or leaf in the tree
+ * purpose: prints out an expression corresponding to the current tree structure
+ * returns: the expression string
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 std::string PQTree::print_expression(bool mark/*false*/)
 {
     std::string result = root->print_expression(mark);
@@ -226,7 +278,15 @@ std::string PQTree::print_expression(bool mark/*false*/)
 }
 
 
-//takes in a string expression of a pq-tree and builds the corresponding tree
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: build_from_expr(std::string const expr, size_t &i)
+ * input: an expression representing a tree and the int representing the position in the string
+ * purpose: buils a tree that corresponds to the input expression. {} indicates a pnode, []
+ *      indicates qnode and int values indicate leaves. while leaves must be separated by
+ *      whitepace to differentiate leaves, the amount of whitespace is irrelevant
+ * returns: a Node pointer to the prospective "root". returns NULL if the expression is invalid
+ * notes: this function is recursive
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 Node* PQTree::build_from_expr(std::string const expr, size_t &i)
 {
     if(follow){ printf("PQTree::build_from_expr(std::string const expr, int &i)\n"); }
@@ -295,7 +355,15 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i)
     return rt;
 }
 
-
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: mark_pertinent(std::vector<int> vec)
+ * input: a vector of int values
+ * purpose: runs through the leaflist and marks any nodes with any one of the values in
+ *      the input vector to full. returns a list of these leaves that are marked full
+ *      simultaneously it performs a "lazy cleanup" on the list. i.e. removing any
+ *      nodes in the list that are null pointers from previously removed leaves
+ * returns a list of leaves
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec)
 {
     if(follow){ printf("PQTree::mark_pertinent(std::vector<int> vec)\n"); }
@@ -308,7 +376,7 @@ std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec)
             it = leaflist.erase(it);
         }else
         {
-            if(contains(vec, (*it)->get_value())){
+            if(custom::contains(vec, (*it)->get_value())){
                 (*it)->mark();
                 fulls.push_back((*it));
             }
@@ -318,6 +386,13 @@ std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec)
     return fulls;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: get_pertinent()
+ * purpose: runs through the leaflist and returns a list of leaves that are marked full
+ *      simultaneously it performs a "lazy cleanup" on the list. i.e. removing any
+ *      nodes in the list that are null pointers from previously removed leaves
+ * returns a list of leaves
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 std::list<Leaf*> PQTree::get_pertinent()
 {
     if(follow){ printf("PQTree::get_pertinent()\n"); }
@@ -341,12 +416,20 @@ std::list<Leaf*> PQTree::get_pertinent()
     return fulls;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: get_leaflist_size()
+ * purpose: returns the size of the current leaflist. mainly for testing
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 size_t PQTree::get_leaflist_size()
 {
     return leaflist.size();
 }
 
-
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: compare(std::string s1, std::string s2)
+ * purpose: compares two strings for equality ignoring spaces (' ')
+ * returns false if they are not equal, true if they are
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool custom::compare(std::string s1, std::string s2)
 {
     auto a = s1.begin();
@@ -377,7 +460,23 @@ bool custom::compare(std::string s1, std::string s2)
     return true;
 }
 
-
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: contains(std::vector<int> vec, int v)
+ * input: a vector of int values and an int
+ * purpose: checks if the int v is a member of the vector
+ * returns false if the vector does not have the value specified, true otherwise
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+bool custom::contains(std::vector<int> vec, int v)
+{
+    for(size_t i=0; i<vec.size(); ++i)
+    {
+        if(vec[i]==v)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 
 
