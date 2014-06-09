@@ -2,7 +2,7 @@
 # this helped: http://www.cs.northwestern.edu/academics/courses/211/html/make.html
 
 SRCS = Leaf.cpp Node.cpp PQnode.cpp PQTree.cpp 
-TSRC = ExampleTests.cpp
+TSRC = PQTreeTests.cpp
 HDRS = Leaf.h Node.h PQnode.h PQTree.h
 PROJ = pract
 

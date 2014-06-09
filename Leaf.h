@@ -4,8 +4,7 @@
 
 //warning to ignore
 #pragma GCC diagnostic ignored "-Wpadded"
-#pragma GCC diagnostic ignored "-Wexit-time-destructors"
-#pragma GCC diagnostic ignored "-Wglobal-constructors"
+#pragma GCC diagnostic ignored "-Wc++11-extensions"
 
 
 //dependencies

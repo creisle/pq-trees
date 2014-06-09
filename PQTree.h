@@ -4,6 +4,7 @@
 
 //warning to ignore
 #pragma GCC diagnostic ignored "-Wpadded"
+#pragma GCC diagnostic ignored "-Wc++11-extensions"
 
 //dependencies
 #include "PQnode.h"
@@ -24,7 +25,7 @@ class PQTree
 {
     private:
         PQnode *root; //pointer to the root of the PQ tree
-        std::list<Leaf*> leaflist;
+        std::list<Leaf*> leaflist; //don't need to add to the destructor since this is never "newed"
         
         //testing
         Node* build_from_expr(std::string const expr, size_t &i);
@@ -40,6 +41,8 @@ class PQTree
         std::list<Leaf*> get_pertinent();
         
     public:
+        
+        //constructors and destructor
         PQTree();
         PQTree(std::string const expression);
         PQTree(std::vector<int> v);
@@ -56,6 +59,11 @@ class PQTree
         
         //leaflist functions
         size_t get_leaflist_size();
+};
+
+namespace custom
+{
+    bool compare(std::string s1, std::string s2);
 };
 
 #endif

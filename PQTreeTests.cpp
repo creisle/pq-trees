@@ -12,11 +12,15 @@
 #include <stdlib.h>
 #include <sstream>
 
+#pragma GCC diagnostic ignored "-Wc++11-extensions"
+#pragma GCC diagnostic ignored "-Wpadded"
+
 class PQTreeTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE( PQTreeTests );
     CPPUNIT_TEST( testPlanar );
     CPPUNIT_TEST( testConsectuive );
+    CPPUNIT_TEST( testConstructExpression );
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -57,7 +61,7 @@ public:
         }
         std::string expected = "{ 0 }";
         std::string message = "expected { 0 } but found "+tree.print_expression()+"\n";
-        CPPUNIT_ASSERT_MESSAGE( message, expected.compare(tree.print_expression())==0);
+        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expected, tree.print_expression()));
     }
     
     void testConsectuive() //purpose: tests a consectutive ones matrix example
@@ -81,6 +85,22 @@ public:
             }
         }
         CPPUNIT_ASSERT_MESSAGE( "Consecutive ordering example failed\n ", pass);
+    }
+    
+    void testConstructExpression() //test PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t = pnode); adds to the leaflist correctly
+    {
+        //mock a tre from an expression and see that the output matches
+        std::string expr = "[ 5  [ 2  3  { 3 4 } ] 1  { 2  3  { 4 5 } } ]";
+        size_t expr_count = 10;
+        PQTree *tree = new PQTree(expr);
+        
+        std::string message = "expected "+expr+" but found "+tree->print_expression()+"\n";
+        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expr, tree->print_expression()));
+        
+        size_t count = tree->get_leaflist_size();
+        
+        CPPUNIT_ASSERT_EQUAL(expr_count, count);
+        
     }
 };
 
@@ -139,20 +159,15 @@ public:
 class PQnodeTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE( PQnodeTests );
-    CPPUNIT_TEST( test_marking );
+    CPPUNIT_TEST( test_marking ); 
+    CPPUNIT_TEST( test_reduce_qroot );
+    CPPUNIT_TEST( test_reduce_proot );
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-
-	void setUp()
-	{
-	}
     
-    void tearDown()
+    void test_marking()
     {
-    }
-    
-    void test_marking(){
         //mock a node with one partial child and two full and two empty
         std::vector<int> v = {2, 2, 3, 4};
         std::list<Leaf*> lst;
@@ -172,6 +187,63 @@ public:
         
         CPPUNIT_ASSERT_EQUAL(child->get_mark(), partial);
         CPPUNIT_ASSERT_EQUAL(root->get_mark(), partial);
+        
+        delete root;
+    }
+    
+    void test_reduce_qroot()
+    {
+        std::vector<int> v = {5, 2, 3, 1};
+        std::list<Leaf*> lst;
+        PQnode *root = new PQnode(v, lst); // {5, 2, 3, 1}
+        std::vector<int> vv = {2, 1, 3, 4};
+        PQnode *child = new PQnode(vv, lst); // {2, 1, 3, 4}
+        root->link_child(child); // {5, 2, 3, 1 {2, 1, 3, 4} }
+        root->set_type(qnode); // [5, 2, 3, 1 {2, 1, 3, 4} ]
+                
+        for(std::list<Leaf*>::iterator itr = lst.begin(); itr != lst.end(); ++itr) //mark the value = 2 children as full
+        {
+            if((*itr)->get_value()==1){
+                (*itr)->mark();
+            }
+        }
+        
+        child->mark(); //mark the child
+        root->mark(); //mark the root
+        root->reduce(); //apply the reduction
+        
+        std::string expected = "[ 5  2  3  1  1  { 2  3  4 } ]";
+        std::string message = "expected [ 5  2  3  1  1  { 2  3  4 } ] but found "+root->print_expression()+"\n";
+        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expected, root->print_expression()));
+        
+        delete root;
+    }
+    
+    void test_reduce_proot()
+    {
+        std::vector<int> v = {5, 2, 3, 1};
+        std::list<Leaf*> lst;
+        PQnode *root = new PQnode(v, lst); // {5, 2, 3, 1}
+        std::vector<int> vv = {2, 1, 3, 4};
+        PQnode *child = new PQnode(vv, lst); // {2, 1, 3, 4}
+        root->link_child(child); // {5, 2, 3, 1 {2, 1, 3, 4} }
+                
+        for(std::list<Leaf*>::iterator itr = lst.begin(); itr != lst.end(); ++itr) //mark the value = 2 children as full
+        {
+            if((*itr)->get_value()==1){
+                (*itr)->mark();
+            }
+        }
+        
+        child->mark(); //mark the child
+        root->mark(); //mark the root
+        root->reduce(); //apply the reduction
+        
+        std::string expected = "{ 5  2  3  [ { 2  3  4 }  1  1 ] }";
+        std::string message = "expected "+expected+" but found "+root->print_expression()+"\n";
+        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expected, root->print_expression()));
+        
+        delete root;
     }
 };
 

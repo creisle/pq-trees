@@ -341,7 +341,41 @@ std::list<Leaf*> PQTree::get_pertinent()
     return fulls;
 }
 
+size_t PQTree::get_leaflist_size()
+{
+    return leaflist.size();
+}
 
+
+bool custom::compare(std::string s1, std::string s2)
+{
+    auto a = s1.begin();
+    auto b = s2.begin();
+    while(a!=s1.end())
+    {
+        if((*a)!=' ') //ignore whitespace in s1
+        {
+            while(b!=s2.end())
+            {
+                if((*b)!=' ') //ignore whitespace in s2
+                {
+                    if((*b)==(*a))
+                    {
+                        ++b;
+                        break;
+                    }else
+                    {
+                        return false;
+                    }
+                }
+                ++b;
+            }
+        }
+        ++a;
+    }
+    
+    return true;
+}
 
 
 

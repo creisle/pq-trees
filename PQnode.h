@@ -5,6 +5,7 @@
 
 //warning to ignore
 #pragma GCC diagnostic ignored "-Wpadded"
+#pragma GCC diagnostic ignored "-Wc++11-extensions"
 
 //dependencies
 #include "Node.h"
@@ -26,7 +27,10 @@ class PQnode: public Node
         bool reduce(bool direction); //for descedants of the pertinent subroot
         Node* group_children(std::list<Node*> group);
         size_t grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<Node*> &tmp);
-        bool promote_partial_children(std::list<Node*>::iterator &it);
+        bool promote_partial_children(std::list<Node*>::iterator &it, bool direction);
+        void pop_children(std::list<Node*> &kids);
+        
+        
         //funcitons for marking
         size_t skip_marks(std::list<Node*>::iterator &itr, marking mark);
         
