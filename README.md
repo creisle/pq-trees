@@ -20,6 +20,8 @@ PQTRee Expressions:
     pnode - { }
     qnode - [ ]
     leaf - any integer
+
+![Alt text](tree_example.jpg "PQTree example")
     
 Ways to use the trees?
 
