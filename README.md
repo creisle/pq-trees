@@ -1,11 +1,9 @@
 pq-trees
 ========
 
-Note: This software is distributed without any warranty or guarantee
+Note: This software is distributed without any warranty or guarantee and is currently in development
 
 Implementation of Booth and Leuker's (1) PQTree datastructure as described by Young (2). It should be noted that while the rules outlined for the PQTree trees were followed a large degree of creativity was used in implementing them
-
-Currently in progress of development. Implementation is correct as per unit tests. However, while it should be linear time since the implemetation was based on a linear time algorithm a rigourous time analysis is still to be done
 
 what is a PQ Tree?
 
