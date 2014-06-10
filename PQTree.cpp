@@ -479,12 +479,17 @@ bool custom::contains(std::vector<int> vec, int v)
 
 //should the first node be sorted before the second node? false means do nothing, true means sort them
 //are they in the correct order as first and second?
-bool custom::compare(Node *first, Node *second)
+bool custom::compare_nodes(Node *first, Node *second)
 {
+    printf("in custom::compare_nodes. comparing...\n");
+    first->print();
+    second->print();
+    
     if( Leaf *lf = dynamic_cast<Leaf*>(first)) //first is a leaf
     {
         if( Leaf *tmp = dynamic_cast<Leaf*>(second))
         {
+            printf("both leaves\n");
             if(lf->get_value()>tmp->get_value())
             {
                 return false;
@@ -504,22 +509,103 @@ bool custom::compare(Node *first, Node *second)
             fprintf(stderr, "Error in sorting the nodes. input node is nething leaf or pq-node\n");
             exit(1);
         }
-        if(a->get_depth()<b->get_depth())
+        else if(a->get_type()!=b->get_type()) //different type?
         {
-            return false;
+            printf("in the custom comparator and different type of node\n");
+            if(a->get_type()==pnode)
+            {
+                return false;
+            }
         }
-        else if(a->get_depth()>b->get_depth())
+        else if(a->get_depth()!=b->get_depth()) //different depth?
         {
-            return true;
-        }
-        else
+            printf("in the custom comparator and different depth of node\n");
+            if(a->get_depth()<=b->get_depth())
+            {
+                return false;
+            }
+        } 
+        else if(a->count_children()!=b->count_children()) //differnt number of children?
         {
-            
+            printf("in the custom comparator and different number of children\n");
+            if(a->count_children()<=b->count_children())
+            {
+                return false;
+            }
         }
-        
+        else //same for all parameters..... what to test next?
+        {
+            //sort the chidren of each node and then compare each child by child
+            if(a->get_type()==qnode) //they are both q-nodes
+            {
+                printf("in the custom comparator and both are qndoes\n");
+                Node *fa = (a->get_children())->front();
+                Node *fb = (b->get_children())->front();
+                Node *ba = (a->get_children())->back();
+                Node *bb = (b->get_children())->back();
+                if(!custom::compare_nodes(fa, ba)) //a is in the incorrect ordering
+                {
+                    a->reverse_children();
+                }
+                if(!custom::compare_nodes(fb, bb)) //b is in the incorrect ordering
+                {
+                    b->reverse_children();
+                }
+                
+                if(!custom::compare_nodes(fa, fb)) //a should come before b
+                {
+                    return false;
+                }
+            }
+            else //they are both p-nodes
+            {
+                printf("in the custom comparator and both are pndoes\n");
+                (a->get_children())->sort(custom::compare_nodes);
+                (b->get_children())->sort(custom::compare_nodes);
+                
+                auto ita = (a->get_children())->begin();
+                auto itb = (b->get_children())->begin(); 
+                while(ita!=(b->get_children())->end()&&itb!=(b->get_children())->end())
+                {
+                    if(custom::compare_nodes(*itb, *ita)) //b should be before a
+                    {
+                        return false;
+                    }
+                    ++ita;
+                    ++itb;
+                }
+            }
+        }
     }
+    printf("end\n");
     return true;
 }
 
+bool PQTree::equivalent(PQTree &tree)
+{
+    sort();
+    tree.sort();
+    return custom::compare(print_expression(), tree.print_expression());
+}
+
+void PQTree::sort()
+{
+    printf("in sort() method of the PQTree\n");
+    sort(root);
+}
+
+void PQTree::sort(PQnode* curr)
+{
+    printf("PQTree::sort(PQnode* curr)\n");
+    std::list<Node*> kids = *(curr->get_children());
+    for(auto itr = kids.begin(); itr!= kids.end(); ++itr)
+    {
+        if(PQnode *pq = dynamic_cast<PQnode*>(*itr))
+        {
+            sort(pq);
+        }
+    }
+    kids.sort(custom::compare_nodes);
+}
 
 

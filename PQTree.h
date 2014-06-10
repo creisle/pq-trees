@@ -30,7 +30,7 @@ namespace custom
         PQnode *p;
         bool used;
     };
-    bool compare(Node *first, Node *second);
+    bool compare_nodes(Node *first, Node *second);
 };
 
 class PQTree
@@ -52,6 +52,10 @@ class PQTree
         PQnode* reduce(std::vector<int> values);
         std::list<Leaf*> get_pertinent();
         
+        //other
+        void sort();
+        void sort(PQnode* curr);
+        
     public:
         
         //constructors and destructor
@@ -71,6 +75,7 @@ class PQTree
         
         //other
         size_t get_leaflist_size();
+        bool equivalent(PQTree &tree);
         
 };
 

@@ -18,6 +18,7 @@ Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist)
     p->update_depth();
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
+    type = leafnode;
 }
 
 Leaf::Leaf(int v, std::list<Leaf*> &leaflist)
@@ -27,6 +28,7 @@ Leaf::Leaf(int v, std::list<Leaf*> &leaflist)
     value = v;
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
+    type = leafnode;
 }
 
 

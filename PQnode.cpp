@@ -900,3 +900,13 @@ bool PQnode::is_equivalent(Node *other)
     return false;
 }
 
+std::list<Node*>* PQnode::get_children()
+{
+    return &children;
+}
+
+void PQnode::reverse_children()
+{
+    children.reverse();
+}
+
