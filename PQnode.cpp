@@ -26,7 +26,6 @@ PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*
         Leaf *lf = new Leaf(this, leaves[i], leaflist);
         children.push_back(lf);
     }
-    depth = 1;
     set_type(t);
 }
 
@@ -43,23 +42,15 @@ PQnode::~PQnode()
 
 void PQnode::print()
 {
-    printf("node-type: %s\t", (type==pnode)? "P": "Q");
+    printf("+++++++++++++ node-type: %s  +++++++++++\n", (type==pnode)? "P": "Q");
     Node::print();
-    printf("num children: %lu : ", children.size());
+    printf("num children: %lu ... \n\n", children.size());
     
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it)
     {
-        if(Leaf *lf = dynamic_cast<Leaf*>((*it)))
-        {
-            printf("%d ", lf->get_value());
-        }
-        else if(PQnode *pq = dynamic_cast<PQnode*>((*it)))
-        {
-            printf("%c ", (pq->get_type()==pnode)? 'P': 'Q');
-        }
-        
+        (*it)->print();
     }
-    printf("\n");
+    
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -203,7 +194,7 @@ void PQnode::sort_children()
         while( it!=children.end() )
         {
             size_t ecount = skip_marks(it, empty);
-            skip_marks(it, partial);
+            size_t pcount = skip_marks(it, partial);
             size_t fcount = skip_marks(it, full);
             size_t p2count = skip_marks(it, partial);
             size_t e2count = skip_marks(it, empty);
@@ -251,10 +242,10 @@ void PQnode::unmark()
     }
 }
 
-std::string PQnode::print_expression(print_option m/*none*/)
+std::string PQnode::print_expression(bool m/*false*/)
 {
     std::string result = "";
-    if(m==mark_option)
+    if(m)
     {
         switch(node_mark)
         {
@@ -268,10 +259,6 @@ std::string PQnode::print_expression(print_option m/*none*/)
                 result += "p:";
                 break;
         }
-    }
-    else if(m==depth_option)
-    {
-        result += std::to_string(depth)+": ";
     }
     if(type==qnode)
     {
@@ -378,7 +365,7 @@ bool PQnode::reduce_proot()
         }
     }
     
-    grab_marks(it, full, full_list);  
+    size_t fcount = grab_marks(it, full, full_list);  
     
     children.clear();
     children.splice(children.end(), empty_list);//add the empty nodes back (still have the same parent)
@@ -521,9 +508,9 @@ bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, bool direc
                 {
                     children.insert(it, temp);
                     temp->set_parent(this);
+                    temp->update_depth();
                     temp = curr->pop_child();
                 }
-                update_depth();
             }else
             {
                 return false;
@@ -735,7 +722,7 @@ bool PQnode::link_child(Node *child)
     }
     child->set_parent(this);
     children.push_back(child);
-    update_depth();
+    child->update_depth();
     return true;
 }
 
@@ -748,19 +735,19 @@ bool PQnode::link_child(Node *child)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void PQnode::update_depth()
 {
-    int d = 0;
+    if(parent==NULL)
+    {
+        if(depth==0){ return; } //if this is correct, children will be correct
+        depth = 0;
+    }
+    else
+    {
+        if(depth==parent->get_depth()+1){ return; } //if this is correct, children will be correct
+        depth = parent->get_depth() + 1;
+    }
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it)
     {
-        if((*it)->get_depth()>d)
-        {
-            d = (*it)->get_depth();
-        }
-    }
-    depth = d + 1;
-    
-    if(parent!=NULL)
-    {
-        parent->update_depth();
+        (*it)->update_depth();
     }
 }
 
@@ -802,7 +789,6 @@ size_t PQnode::count_children()
  * input: the type we want to set
  * purpose: sets the type. if qnode, makes sure that it isa valid qnode. otherwise
  *      it defaults to setting it to a pnode
- * return: none
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void PQnode::set_type(nodetype t)
 {
@@ -872,41 +858,7 @@ bool PQnode::condense_and_replace(Node *child)
     //now the iterator is at the item just after the last full leaf
     children.insert(it, child);
     child->set_parent(this);
-    update_depth();
+    child->update_depth();
     
     return true;
 }
-
-//test if another node is equivalent currently this method is O(n2) where n is the number of children for pnodes
-bool PQnode::is_equivalent(Node *other)
-{
-    //std::stack<char> node_structure; //stack for computing bracket closure etc
-    std::set<int> leaves; //set of the leaf values in this node
-    std::list<PQnode*> pnodes; //list of all the pnodes in the current node
-    std::list<PQnode*> qnodes; //list of all the qnodes in the current node
-    std::list<PQnode*> pnodes_other;
-    std::list<PQnode*> qnodes_other;
-    
-    if( PQnode *pq = dynamic_cast<PQnode*>(other) ) //make sure it is the same type
-    {
-        if( count_children()!=pq->count_children() ) //makes sure they have the same number of children
-        {
-            return false;
-        }
-        
-        
-        
-    }
-    return false;
-}
-
-std::list<Node*>* PQnode::get_children()
-{
-    return &children;
-}
-
-void PQnode::reverse_children()
-{
-    children.reverse();
-}
-

@@ -24,7 +24,7 @@ class Leaf: public Node
         
         //testing functions
         void print();
-        std::string print_expression(print_option m = none);
+        std::string print_expression(bool m = false);
         
         //update and setters
         void mark();
@@ -33,9 +33,6 @@ class Leaf: public Node
         
         //getters
         int get_value();
-        
-        //other
-        bool is_equivalent(Node *other);
 };
 
 #endif

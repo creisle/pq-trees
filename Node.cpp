@@ -21,21 +21,21 @@ void Node::print()
     printf("Node addr: %p\n", this);
     if(parent==NULL)
     {
-        printf("parent addr: NULL\t");
+        printf("parent addr: NULL\n");
     }else
     {
-        printf("parent addr: %p\t", parent);
+        printf("parent addr: %p \n", parent);
     }
     switch(node_mark)
     {
         case full:
-            printf("mark: full\t");
+            printf("mark: full\n");
             break;
         case empty:
-            printf("mark: empty\t");
+            printf("mark: empty\n");
             break;
         case partial:
-            printf("mark: partial\t");
+            printf("mark: partial\n");
             break;
     }
     printf("depth = %d\n", depth);
@@ -75,7 +75,5 @@ bool compare_marking(Node *first, Node *second)
         return false;
     }
 }
-
-
 
 

@@ -12,11 +12,9 @@
 #include <list>
 #include <string>
 #include <vector>
-#include <set>
 
 enum nodetype {pnode , qnode, leafnode};
 enum marking {empty, partial, full};
-enum print_option {none, mark_option, depth_option};
 
 class Node
 {
@@ -29,11 +27,9 @@ class Node
     public:
         Node();
         virtual ~Node(){} //destructor. use this to get rid of crap "new"'d inside the constructor
-        
         virtual void print() = 0; //now this is pure virtual
-        virtual std::string print_expression(print_option m = none) = 0;
+        virtual std::string print_expression(bool m = false) = 0;
         virtual void update_depth() = 0;
-        virtual bool is_equivalent(Node *other) = 0;
         
         //getters
         Node* get_parent();

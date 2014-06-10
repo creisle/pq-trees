@@ -58,16 +58,10 @@ class PQnode: public Node
         
         //other
         void set_type(nodetype t);
-        bool is_equivalent(Node *other);
-        //bool equivalent(PQnode &curr, std::string::iterator &it);
-        void reverse_children();
         
         //mainly for testing
-        std::string print_expression(print_option m = none);
+        std::string print_expression(bool m = false);
         void print();
-        
-        //getters
-        std::list<Node*>* get_children();
         
 };
 

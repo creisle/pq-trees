@@ -14,11 +14,9 @@ Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist)
     if(test_leaks){ printf("LEAF ++\n"); }
     parent = p;
     value = v;
-    depth = 0;
-    p->update_depth();
+    depth = p->get_depth() +1;
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
-    type = leafnode;
 }
 
 Leaf::Leaf(int v, std::list<Leaf*> &leaflist)
@@ -28,7 +26,6 @@ Leaf::Leaf(int v, std::list<Leaf*> &leaflist)
     value = v;
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
-    type = leafnode;
 }
 
 
@@ -54,10 +51,10 @@ void Leaf::mark(){ node_mark = full;}
 int Leaf::get_value(){ return value; }
 void Leaf::unmark(){ node_mark = empty; }
 
-std::string Leaf::print_expression(print_option m/*none*/)
+std::string Leaf::print_expression(bool print_mark /*false*/)
 {
     std::string result = "";
-    if(m==mark_option)
+    if(print_mark)
     {
         switch(node_mark)
         {
@@ -72,33 +69,32 @@ std::string Leaf::print_expression(print_option m/*none*/)
                 break;
         }
     }
-    else if(m==depth_option)
-    {
-        result += std::to_string(depth)+": ";
-    }
     result += std::to_string(value);
     return result;
 }
 
 void Leaf::update_depth()
 {
-    depth = 0;
+    if(parent==NULL)
+    {
+        depth = 0;
+    }else
+    {
+        depth = parent->get_depth() + 1;
+    }
 }
 
-//test if two leaves are equivalent
-bool Leaf::is_equivalent(Node *other)
+bool contains(std::vector<int> vec, int v)
 {
-    if(Leaf *lf = dynamic_cast<Leaf*>(other))
+    for(size_t i=0; i<vec.size(); ++i)
     {
-        if(lf->get_value()==value)
+        if(v==vec[i])
         {
             return true;
         }
     }
     return false;
 }
-
-
 
     
 

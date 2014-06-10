@@ -21,7 +21,7 @@ $(APP): $(OBJS) $(TSRC)
 
 #compile the custom files but not the test class since it needs these oject files
 %.o: %.cpp $(HDRS)
-	$(CXX) -c $(CFLAGS) $< -o $@
+	$(CXX) -c  $< -o $@
 
 #clean up object and exe files
 clean:
