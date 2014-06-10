@@ -76,7 +76,6 @@ PQTRee Expressions:
         
     for(size_t i=1; i<adj.size(); i++)
     {
-        int curr = (int)(i+1);
         std::vector<int> v = adj[i];
         if(!tree.reduce_and_replace(curr, v))
         {
