@@ -1,8 +1,6 @@
 #PQ-Trees
 
-**Note:** This software is distributed without any warranty or guarantee and is currently in development
-
-Implementation of Booth and Leuker's (1) PQTree datastructure as described by Young (2). It should be noted that while the rules outlined for the PQTree trees were followed a large degree of creativity was used in implementing them
+This is an implementation of Booth and Leuker's (1) PQTree datastructure as described by Young (2). It should be noted that while the rules outlined for the PQTree trees were followed a large degree of creativity was used in implementing them
 
 ##What is a PQ Tree?
 
@@ -103,7 +101,7 @@ PQTRee Expressions:
 
 ##Notes:
 
-1. The provided makefile is for unix/linux and compiles with the testing script and you must have cppunit installed for this to work. 
-2. This uses C++11. So be sure to use the approriate flags when compiling with your own project
-3. If you come across any bugs or errors be sure to let me know :)
-
+1. This software is distributed without any warranty or guarantee and is currently in development. If you come across any bugs or errors be sure to let me know :)
+2. The provided makefile is for unix/linux and compiles with the testing script and you must have cppunit installed for this to work. 
+3. This uses C++11. So be sure to use the approriate flags when compiling with your own project
+4. There are some GCC warnings turned off with pre-processor statments in the header files ( i.e. for padding structures and c++11 specific features). Just delete the #pragma lines to turn these back on
