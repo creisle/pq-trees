@@ -71,7 +71,7 @@ void PQTree::print()
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
 {
-    if(follow){ printf("PQTree::reduce_and_replace(int value, std::vector<int> tree_in)\n"); }
+    if(follow){ printf("PQTree::reduce_and_replace(int value, std::vector<int> tree_in)\n%s\n", print_expression(depth_option).c_str()); }
     
     //put the value inside a vector
     std::vector<int> values;
@@ -107,7 +107,7 @@ PQnode* PQTree::reduce(std::vector<int> values)
     if(follow){ printf("PQTree::reduce(int value)\n"); }
     
     PQnode* subroot = mark(values); //pertinent subroot
-    if(follow){ printf("PQTree::reduce(int value). marked as "); print_expression(true); }
+    if(follow){ printf("PQTree::reduce(int value). marked as "); print_expression(none); }
     if(subroot!=NULL)
     {
         if(subroot->reduce())
@@ -199,7 +199,6 @@ PQnode* PQTree::mark(std::vector<int> v)
     
     std::list<Leaf*> fulls = mark_pertinent(v); //mark the full leaves based on the input values
     std::list<PQnode*> partials; 
-    
     for(std::list<Leaf*>::iterator k = fulls.begin(); k!=fulls.end(); ++k)
     {
         PQnode *p = dynamic_cast<PQnode*>((*k)->get_parent());
@@ -253,7 +252,7 @@ void PQTree::add_unique_by_depth(PQnode *p, std::list<PQnode*> &partials){
     {
         for(std::list<PQnode*>::iterator it=partials.begin(); it!=partials.end(); ++it) //iterates through our list of partials
         { 
-            if((*it)->get_depth()>=p->get_depth())
+            if((*it)->get_depth()<=p->get_depth()) //udpated after depth change
             {
                 if(p==(*it)){ break; }
             }else
@@ -271,9 +270,9 @@ void PQTree::add_unique_by_depth(PQnode *p, std::list<PQnode*> &partials){
  * purpose: prints out an expression corresponding to the current tree structure
  * returns: the expression string
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-std::string PQTree::print_expression(bool mark/*false*/)
+std::string PQTree::print_expression(print_option m/*false*/)
 {
-    std::string result = root->print_expression(mark);
+    std::string result = root->print_expression(m);
     return result;
 }
 
@@ -366,7 +365,7 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 std::list<Leaf*> PQTree::mark_pertinent(std::vector<int> vec)
 {
-    if(follow){ printf("PQTree::mark_pertinent(std::vector<int> vec)\n"); }
+    if(follow){ printf("PQTree::mark_pertinent(std::vector<int> vec)\n%s\n%s\n", print_expression(mark_option).c_str(), print_expression(depth_option).c_str()); }
     std::list<Leaf*> fulls;
     std::list<Leaf*>::iterator it=leaflist.begin();
     while(it!=leaflist.end())
@@ -423,218 +422,6 @@ std::list<Leaf*> PQTree::get_pertinent()
 size_t PQTree::get_leaflist_size()
 {
     return leaflist.size();
-}
-
-//calls the recusive tree compare method in the PQnode class
-bool PQTree::equivalent(PQTree &tree)
-{
-    printf("equivalent(tree)\n");
-    if( get_leaflist_size()!=tree.get_leaflist_size() ) //must have the same number of leaves or immediately reject
-    {
-        return false;
-    }
-    
-    std::multiset<int> a, b; //push the leaf values into multisets
-    std::list<custom::descendant_set> plist, foreign_plist;
-    
-    for(auto it: leaflist)
-    {
-        a.insert(it->get_value());
-    }
-    for(auto it: tree.leaflist)
-    {
-        b.insert(it->get_value());
-    }
-    if(a!=b) //must have the same elements in the leaflist
-    {
-        return false;
-    }
-    
-    //add parents of the leaves and create the list of partitions
-    for(auto it: leaflist)
-    {
-        custom::descendant_set curr;
-        (curr.leaves).insert(it->get_value());
-        curr.used = false;
-        if((curr.p = dynamic_cast<PQnode*>(it->get_parent())))
-        {
-            update_ancestor_list(plist, curr);
-        }
-    }
-    
-    for(auto it: tree.leaflist)
-    {
-        custom::descendant_set curr;
-        (curr.leaves).insert(it->get_value());
-        curr.used = false;
-        if((curr.p = dynamic_cast<PQnode*>(it->get_parent())))
-        {
-            update_ancestor_list(foreign_plist, curr);
-        }
-    }
-    
-    int current_depth = ((plist.front()).p)->get_depth();
-    if(current_depth!=((foreign_plist.front()).p)->get_depth())
-    {
-        return false;
-    }
-    printf("after dealing with the leaves this tree has %lu parents and the potential equivalent has %lu parnets\n", plist.size(), foreign_plist.size());
-    return equivalent(current_depth, plist, foreign_plist);
-}
-
-//add in the correct positioning based on the depth
-//if not unique, merge the leaf values from the element we are on currently
-//we just removed curr from the front of the list and we are on it's depth level
-bool PQTree::update_ancestor_list(std::list<custom::descendant_set> &plist, custom::descendant_set curr)
-{
-    printf("update_ancestor_list()\n");
-    if(plist.empty())
-    {
-        curr.used = false;
-        plist.push_back(curr);
-        return true;
-    }
-    
-    auto it = plist.begin();
-    while(it!=plist.end())
-    {
-        if((*it).p==NULL)
-        {
-            return false;
-        }
-        if(((*it).p)->get_depth()<(curr.p)->get_depth()) //too far, won't be in the list, add it here
-        {
-            break;
-        }
-        else if((*it).p==(curr.p)) //point to the same node, merge the value sets
-        {
-            ((*it).leaves).insert((curr.leaves).begin(), (curr.leaves).end());
-            return true;
-        } 
-        ++it;
-    }
-    curr.used = false;
-    plist.insert(it, curr);
-    return true;
-    
-}
-
-//incoming list items must be sorted wrt to depth? decresing. highest depth param first aka lowest on the tree
-bool PQTree::equivalent(int current_depth, std::list<custom::descendant_set> plist, std::list<custom::descendant_set> foreign_plist) //already dealt with the leaves for each
-{
-    printf("equivalent(depth, list1, list2)\n");
-    
-    
-    if(plist.size()!=foreign_plist.size()) //should always be the same size since we deal with one depth level at a time
-    {
-        return false;
-    }
-    else if(current_depth==0) //when we get to here, all elements must have been merged into the multiset
-    {
-        custom::descendant_set a = plist.front();
-        custom::descendant_set b = foreign_plist.front();
-        printf("we are at the root\n");
-        (a.p)->print();
-        (b.p)->print();
-        
-        if( a.leaves==b.leaves && (a.p)->get_type()==(b.p)->get_type() )
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    
-    if(((plist.front()).p)->get_depth()!=current_depth)
-    {
-        return false;
-    }
-    
-    //deal with all the elements in the plist at the current depth level
-    
-    for(auto it: plist)
-    {
-        if((it.p)->get_depth()!=current_depth) //finished
-        {
-            break;
-        }
-        it.used=false;
-        //see if this multiset is covered in the other list
-        for(auto k: foreign_plist)
-        {
-            if((k.p)->get_depth()<current_depth)
-            {
-                break;
-            }
-            else if((k.p)->get_depth()==current_depth&&k.used!=true) //should be a one-to-one correspondence between the trees at all levels
-            {
-                if(k.leaves==it.leaves&&(k.p)->get_type()==(it.p)->get_type())
-                {
-                    it.used = true;
-                    k.used = true;
-                }
-            }
-        }
-        
-        if(it.used==false)
-        {
-            return false;
-        }
-    }
-    
-    //now update at this depth level
-    auto it = plist.begin();
-    while(it!=plist.end())
-    {
-        if(((*it).p)->get_depth()==current_depth)
-        {
-            custom::descendant_set temp = (*it);
-            it = plist.erase(it);
-            if(PQnode *par = dynamic_cast<PQnode*>((temp.p)->get_parent()))
-            {
-                temp.p = par;
-                if(!update_ancestor_list(plist, temp)){ return false; }
-            }
-            else
-            {
-                return false;
-            }
-            
-        }
-        else
-        {
-            break;
-        }
-    }
-    
-    //now update at this depth level for the foreign list
-    it = foreign_plist.begin();
-    while(it!=foreign_plist.end())
-    {
-        if(((*it).p)->get_depth()==current_depth)
-        {
-            custom::descendant_set temp = (*it);
-            it = foreign_plist.erase(it);
-            if(PQnode *par = dynamic_cast<PQnode*>((temp.p)->get_parent()))
-            {
-                temp.p = par;
-                if(!update_ancestor_list(foreign_plist, temp)){ return false; }
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
-            break;
-        }
-    }
-    --current_depth;
-    
-    return equivalent(current_depth, plist, foreign_plist);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -704,12 +491,31 @@ bool custom::compare(Node *first, Node *second)
             }
         }
     }
-    else if(Leaf *lf = dynamic_cast<Leaf*>(second)) //second is a leaf, first is not a leaf
+    else if(dynamic_cast<Leaf*>(second)) //second is a leaf, first is not a leaf
     {
         return false;
     }
     else //neither is a leaf
     {
+        PQnode *a = dynamic_cast<PQnode*>(first);
+        PQnode *b = dynamic_cast<PQnode*>(second);
+        if(!a||!b)
+        {
+            fprintf(stderr, "Error in sorting the nodes. input node is nething leaf or pq-node\n");
+            exit(1);
+        }
+        if(a->get_depth()<b->get_depth())
+        {
+            return false;
+        }
+        else if(a->get_depth()>b->get_depth())
+        {
+            return true;
+        }
+        else
+        {
+            
+        }
         
     }
     return true;

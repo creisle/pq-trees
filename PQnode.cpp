@@ -26,6 +26,7 @@ PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*
         Leaf *lf = new Leaf(this, leaves[i], leaflist);
         children.push_back(lf);
     }
+    depth = 1;
     set_type(t);
 }
 
@@ -250,10 +251,10 @@ void PQnode::unmark()
     }
 }
 
-std::string PQnode::print_expression(bool m/*false*/)
+std::string PQnode::print_expression(print_option m/*none*/)
 {
     std::string result = "";
-    if(m)
+    if(m==mark_option)
     {
         switch(node_mark)
         {
@@ -267,6 +268,10 @@ std::string PQnode::print_expression(bool m/*false*/)
                 result += "p:";
                 break;
         }
+    }
+    else if(m==depth_option)
+    {
+        result += std::to_string(depth)+": ";
     }
     if(type==qnode)
     {
@@ -516,9 +521,9 @@ bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, bool direc
                 {
                     children.insert(it, temp);
                     temp->set_parent(this);
-                    temp->update_depth();
                     temp = curr->pop_child();
                 }
+                update_depth();
             }else
             {
                 return false;
@@ -730,7 +735,7 @@ bool PQnode::link_child(Node *child)
     }
     child->set_parent(this);
     children.push_back(child);
-    child->update_depth();
+    update_depth();
     return true;
 }
 
@@ -743,19 +748,19 @@ bool PQnode::link_child(Node *child)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void PQnode::update_depth()
 {
-    if(parent==NULL)
-    {
-        if(depth==0){ return; } //if this is correct, children will be correct
-        depth = 0;
-    }
-    else
-    {
-        if(depth==parent->get_depth()+1){ return; } //if this is correct, children will be correct
-        depth = parent->get_depth() + 1;
-    }
+    int d = 0;
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it)
     {
-        (*it)->update_depth();
+        if((*it)->get_depth()>d)
+        {
+            d = (*it)->get_depth();
+        }
+    }
+    depth = d + 1;
+    
+    if(parent!=NULL)
+    {
+        parent->update_depth();
     }
 }
 
@@ -867,7 +872,7 @@ bool PQnode::condense_and_replace(Node *child)
     //now the iterator is at the item just after the last full leaf
     children.insert(it, child);
     child->set_parent(this);
-    child->update_depth();
+    update_depth();
     
     return true;
 }

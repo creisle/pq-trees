@@ -14,7 +14,8 @@ Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist)
     if(test_leaks){ printf("LEAF ++\n"); }
     parent = p;
     value = v;
-    depth = p->get_depth() +1;
+    depth = 0;
+    p->update_depth();
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
 }
@@ -51,10 +52,10 @@ void Leaf::mark(){ node_mark = full;}
 int Leaf::get_value(){ return value; }
 void Leaf::unmark(){ node_mark = empty; }
 
-std::string Leaf::print_expression(bool print_mark /*false*/)
+std::string Leaf::print_expression(print_option m/*none*/)
 {
     std::string result = "";
-    if(print_mark)
+    if(m==mark_option)
     {
         switch(node_mark)
         {
@@ -69,19 +70,17 @@ std::string Leaf::print_expression(bool print_mark /*false*/)
                 break;
         }
     }
+    else if(m==depth_option)
+    {
+        result += std::to_string(depth)+": ";
+    }
     result += std::to_string(value);
     return result;
 }
 
 void Leaf::update_depth()
 {
-    if(parent==NULL)
-    {
-        depth = 0;
-    }else
-    {
-        depth = parent->get_depth() + 1;
-    }
+    depth = 0;
 }
 
 //test if two leaves are equivalent

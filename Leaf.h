@@ -24,7 +24,7 @@ class Leaf: public Node
         
         //testing functions
         void print();
-        std::string print_expression(bool m = false);
+        std::string print_expression(print_option m = none);
         
         //update and setters
         void mark();

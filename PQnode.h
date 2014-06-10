@@ -62,7 +62,7 @@ class PQnode: public Node
         //bool equivalent(PQnode &curr, std::string::iterator &it);
         
         //mainly for testing
-        std::string print_expression(bool m = false);
+        std::string print_expression(print_option m = none);
         void print();
         
 };

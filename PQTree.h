@@ -52,10 +52,6 @@ class PQTree
         PQnode* reduce(std::vector<int> values);
         std::list<Leaf*> get_pertinent();
         
-        //for finding equivalency
-        bool equivalent(int current_depth, std::list<custom::descendant_set> plist, std::list<custom::descendant_set> foreign_plist);
-        bool update_ancestor_list(std::list<custom::descendant_set> &plist, custom::descendant_set curr);
-        
     public:
         
         //constructors and destructor
@@ -66,7 +62,7 @@ class PQTree
         
         //printing and testing functions
         void print(); //iterates recusively through the tree and prints out leaves and nodes
-        std::string print_expression(bool mark = false); //prints an expression respresenting the tree structure and contents
+        std::string print_expression(print_option m = none); //prints an expression respresenting the tree structure and contents
         void print_leaflist(bool detail = false); //prints the contents of the leaflist
         
         //reduction opertaions
@@ -74,7 +70,6 @@ class PQTree
         bool set_consecutive(std::vector<int> values); //for testing consectutive ones of a matrix
         
         //other
-        bool equivalent(PQTree &tree);
         size_t get_leaflist_size();
         
 };
