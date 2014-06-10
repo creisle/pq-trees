@@ -21,6 +21,18 @@ class Node;
  * will require some editing to use for consecutive ones
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+namespace custom
+{
+    bool compare(std::string s1, std::string s2);
+    bool contains(std::vector<int> vec, int v);
+    struct descendant_set{
+        std::multiset<int> leaves;
+        PQnode *p;
+        bool used;
+    };
+    bool compare(Node *first, Node *second);
+};
+
 class PQTree
 {
     private:
@@ -40,6 +52,10 @@ class PQTree
         PQnode* reduce(std::vector<int> values);
         std::list<Leaf*> get_pertinent();
         
+        //for finding equivalency
+        bool equivalent(int current_depth, std::list<custom::descendant_set> plist, std::list<custom::descendant_set> foreign_plist);
+        bool update_ancestor_list(std::list<custom::descendant_set> &plist, custom::descendant_set curr);
+        
     public:
         
         //constructors and destructor
@@ -57,14 +73,12 @@ class PQTree
         bool reduce_and_replace(int value, std::vector<int> v); //planarity testing
         bool set_consecutive(std::vector<int> values); //for testing consectutive ones of a matrix
         
-        //leaflist functions
+        //other
+        bool equivalent(PQTree &tree);
         size_t get_leaflist_size();
+        
 };
 
-namespace custom
-{
-    bool compare(std::string s1, std::string s2);
-    bool contains(std::vector<int> vec, int v);
-};
+
 
 #endif

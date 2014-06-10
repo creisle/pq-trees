@@ -84,17 +84,20 @@ void Leaf::update_depth()
     }
 }
 
-bool contains(std::vector<int> vec, int v)
+//test if two leaves are equivalent
+bool Leaf::is_equivalent(Node *other)
 {
-    for(size_t i=0; i<vec.size(); ++i)
+    if(Leaf *lf = dynamic_cast<Leaf*>(other))
     {
-        if(v==vec[i])
+        if(lf->get_value()==value)
         {
             return true;
         }
     }
     return false;
 }
+
+
 
     
 

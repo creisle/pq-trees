@@ -33,6 +33,9 @@ class Leaf: public Node
         
         //getters
         int get_value();
+        
+        //other
+        bool is_equivalent(Node *other);
 };
 
 #endif

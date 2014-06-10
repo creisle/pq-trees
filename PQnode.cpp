@@ -42,15 +42,23 @@ PQnode::~PQnode()
 
 void PQnode::print()
 {
-    printf("+++++++++++++ node-type: %s  +++++++++++\n", (type==pnode)? "P": "Q");
+    printf("node-type: %s\t", (type==pnode)? "P": "Q");
     Node::print();
-    printf("num children: %lu ... \n\n", children.size());
+    printf("num children: %lu : ", children.size());
     
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it)
     {
-        (*it)->print();
+        if(Leaf *lf = dynamic_cast<Leaf*>((*it)))
+        {
+            printf("%d ", lf->get_value());
+        }
+        else if(PQnode *pq = dynamic_cast<PQnode*>((*it)))
+        {
+            printf("%c ", (pq->get_type()==pnode)? 'P': 'Q');
+        }
+        
     }
-    
+    printf("\n");
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -194,7 +202,7 @@ void PQnode::sort_children()
         while( it!=children.end() )
         {
             size_t ecount = skip_marks(it, empty);
-            size_t pcount = skip_marks(it, partial);
+            skip_marks(it, partial);
             size_t fcount = skip_marks(it, full);
             size_t p2count = skip_marks(it, partial);
             size_t e2count = skip_marks(it, empty);
@@ -365,7 +373,7 @@ bool PQnode::reduce_proot()
         }
     }
     
-    size_t fcount = grab_marks(it, full, full_list);  
+    grab_marks(it, full, full_list);  
     
     children.clear();
     children.splice(children.end(), empty_list);//add the empty nodes back (still have the same parent)
@@ -789,6 +797,7 @@ size_t PQnode::count_children()
  * input: the type we want to set
  * purpose: sets the type. if qnode, makes sure that it isa valid qnode. otherwise
  *      it defaults to setting it to a pnode
+ * return: none
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void PQnode::set_type(nodetype t)
 {
@@ -862,3 +871,27 @@ bool PQnode::condense_and_replace(Node *child)
     
     return true;
 }
+
+//test if another node is equivalent currently this method is O(n2) where n is the number of children for pnodes
+bool PQnode::is_equivalent(Node *other)
+{
+    //std::stack<char> node_structure; //stack for computing bracket closure etc
+    std::set<int> leaves; //set of the leaf values in this node
+    std::list<PQnode*> pnodes; //list of all the pnodes in the current node
+    std::list<PQnode*> qnodes; //list of all the qnodes in the current node
+    std::list<PQnode*> pnodes_other;
+    std::list<PQnode*> qnodes_other;
+    
+    if( PQnode *pq = dynamic_cast<PQnode*>(other) ) //make sure it is the same type
+    {
+        if( count_children()!=pq->count_children() ) //makes sure they have the same number of children
+        {
+            return false;
+        }
+        
+        
+        
+    }
+    return false;
+}
+

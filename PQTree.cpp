@@ -425,6 +425,218 @@ size_t PQTree::get_leaflist_size()
     return leaflist.size();
 }
 
+//calls the recusive tree compare method in the PQnode class
+bool PQTree::equivalent(PQTree &tree)
+{
+    printf("equivalent(tree)\n");
+    if( get_leaflist_size()!=tree.get_leaflist_size() ) //must have the same number of leaves or immediately reject
+    {
+        return false;
+    }
+    
+    std::multiset<int> a, b; //push the leaf values into multisets
+    std::list<custom::descendant_set> plist, foreign_plist;
+    
+    for(auto it: leaflist)
+    {
+        a.insert(it->get_value());
+    }
+    for(auto it: tree.leaflist)
+    {
+        b.insert(it->get_value());
+    }
+    if(a!=b) //must have the same elements in the leaflist
+    {
+        return false;
+    }
+    
+    //add parents of the leaves and create the list of partitions
+    for(auto it: leaflist)
+    {
+        custom::descendant_set curr;
+        (curr.leaves).insert(it->get_value());
+        curr.used = false;
+        if((curr.p = dynamic_cast<PQnode*>(it->get_parent())))
+        {
+            update_ancestor_list(plist, curr);
+        }
+    }
+    
+    for(auto it: tree.leaflist)
+    {
+        custom::descendant_set curr;
+        (curr.leaves).insert(it->get_value());
+        curr.used = false;
+        if((curr.p = dynamic_cast<PQnode*>(it->get_parent())))
+        {
+            update_ancestor_list(foreign_plist, curr);
+        }
+    }
+    
+    int current_depth = ((plist.front()).p)->get_depth();
+    if(current_depth!=((foreign_plist.front()).p)->get_depth())
+    {
+        return false;
+    }
+    printf("after dealing with the leaves this tree has %lu parents and the potential equivalent has %lu parnets\n", plist.size(), foreign_plist.size());
+    return equivalent(current_depth, plist, foreign_plist);
+}
+
+//add in the correct positioning based on the depth
+//if not unique, merge the leaf values from the element we are on currently
+//we just removed curr from the front of the list and we are on it's depth level
+bool PQTree::update_ancestor_list(std::list<custom::descendant_set> &plist, custom::descendant_set curr)
+{
+    printf("update_ancestor_list()\n");
+    if(plist.empty())
+    {
+        curr.used = false;
+        plist.push_back(curr);
+        return true;
+    }
+    
+    auto it = plist.begin();
+    while(it!=plist.end())
+    {
+        if((*it).p==NULL)
+        {
+            return false;
+        }
+        if(((*it).p)->get_depth()<(curr.p)->get_depth()) //too far, won't be in the list, add it here
+        {
+            break;
+        }
+        else if((*it).p==(curr.p)) //point to the same node, merge the value sets
+        {
+            ((*it).leaves).insert((curr.leaves).begin(), (curr.leaves).end());
+            return true;
+        } 
+        ++it;
+    }
+    curr.used = false;
+    plist.insert(it, curr);
+    return true;
+    
+}
+
+//incoming list items must be sorted wrt to depth? decresing. highest depth param first aka lowest on the tree
+bool PQTree::equivalent(int current_depth, std::list<custom::descendant_set> plist, std::list<custom::descendant_set> foreign_plist) //already dealt with the leaves for each
+{
+    printf("equivalent(depth, list1, list2)\n");
+    
+    
+    if(plist.size()!=foreign_plist.size()) //should always be the same size since we deal with one depth level at a time
+    {
+        return false;
+    }
+    else if(current_depth==0) //when we get to here, all elements must have been merged into the multiset
+    {
+        custom::descendant_set a = plist.front();
+        custom::descendant_set b = foreign_plist.front();
+        printf("we are at the root\n");
+        (a.p)->print();
+        (b.p)->print();
+        
+        if( a.leaves==b.leaves && (a.p)->get_type()==(b.p)->get_type() )
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    if(((plist.front()).p)->get_depth()!=current_depth)
+    {
+        return false;
+    }
+    
+    //deal with all the elements in the plist at the current depth level
+    
+    for(auto it: plist)
+    {
+        if((it.p)->get_depth()!=current_depth) //finished
+        {
+            break;
+        }
+        it.used=false;
+        //see if this multiset is covered in the other list
+        for(auto k: foreign_plist)
+        {
+            if((k.p)->get_depth()<current_depth)
+            {
+                break;
+            }
+            else if((k.p)->get_depth()==current_depth&&k.used!=true) //should be a one-to-one correspondence between the trees at all levels
+            {
+                if(k.leaves==it.leaves&&(k.p)->get_type()==(it.p)->get_type())
+                {
+                    it.used = true;
+                    k.used = true;
+                }
+            }
+        }
+        
+        if(it.used==false)
+        {
+            return false;
+        }
+    }
+    
+    //now update at this depth level
+    auto it = plist.begin();
+    while(it!=plist.end())
+    {
+        if(((*it).p)->get_depth()==current_depth)
+        {
+            custom::descendant_set temp = (*it);
+            it = plist.erase(it);
+            if(PQnode *par = dynamic_cast<PQnode*>((temp.p)->get_parent()))
+            {
+                temp.p = par;
+                if(!update_ancestor_list(plist, temp)){ return false; }
+            }
+            else
+            {
+                return false;
+            }
+            
+        }
+        else
+        {
+            break;
+        }
+    }
+    
+    //now update at this depth level for the foreign list
+    it = foreign_plist.begin();
+    while(it!=foreign_plist.end())
+    {
+        if(((*it).p)->get_depth()==current_depth)
+        {
+            custom::descendant_set temp = (*it);
+            it = foreign_plist.erase(it);
+            if(PQnode *par = dynamic_cast<PQnode*>((temp.p)->get_parent()))
+            {
+                temp.p = par;
+                if(!update_ancestor_list(foreign_plist, temp)){ return false; }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+    --current_depth;
+    
+    return equivalent(current_depth, plist, foreign_plist);
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * function: compare(std::string s1, std::string s2)
  * purpose: compares two strings for equality ignoring spaces (' ')
@@ -478,9 +690,30 @@ bool custom::contains(std::vector<int> vec, int v)
     return false;
 }
 
-
-
-
+//should the first node be sorted before the second node? false means do nothing, true means sort them
+//are they in the correct order as first and second?
+bool custom::compare(Node *first, Node *second)
+{
+    if( Leaf *lf = dynamic_cast<Leaf*>(first)) //first is a leaf
+    {
+        if( Leaf *tmp = dynamic_cast<Leaf*>(second))
+        {
+            if(lf->get_value()>tmp->get_value())
+            {
+                return false;
+            }
+        }
+    }
+    else if(Leaf *lf = dynamic_cast<Leaf*>(second)) //second is a leaf, first is not a leaf
+    {
+        return false;
+    }
+    else //neither is a leaf
+    {
+        
+    }
+    return true;
+}
 
 
 

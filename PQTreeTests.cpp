@@ -21,17 +21,10 @@ class PQTreeTests : public CppUnit::TestFixture
     CPPUNIT_TEST( testPlanar );
     CPPUNIT_TEST( testConsectuive );
     CPPUNIT_TEST( testConstructExpression );
+    CPPUNIT_TEST( testEquivalent );
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-
-	void setUp()
-	{
-	}
-    
-    void tearDown()
-    {
-    }
     
     void testPlanar()
     {
@@ -101,6 +94,21 @@ public:
         
         CPPUNIT_ASSERT_EQUAL(expr_count, count);
         
+    }
+    
+    void testEquivalent() //to test PQTree::equivalent(PQTree &tree)
+    {
+        PQTree a("{3 3 4 { 4 5 2 } }");
+        PQTree b("{3 { 5 4 2 } 3 4 }");
+        PQTree c("[3 { 5 4 2 } 3 4 ]");
+        PQTree d("{3 [ 5 4 2 ] 3 4 }");
+        PQTree e("[3 { 5 4 2 } 4 3 ]");
+        
+        CPPUNIT_ASSERT_MESSAGE( "Trees should be equivalent: the same except ordering of pnodes\n", a.equivalent(b));
+        CPPUNIT_ASSERT_MESSAGE( "Trees should NOT be equivalent: the same except for type of root node\n", !b.equivalent(c));
+        CPPUNIT_ASSERT_MESSAGE( "Trees should NOT be equivalent\n", !a.equivalent(c));
+        CPPUNIT_ASSERT_MESSAGE( "Trees should NOT be equivalent: the same except for type of a child node\n", !b.equivalent(d));
+        CPPUNIT_ASSERT_MESSAGE( "Trees should NOT be equivalent: common qnode has the same children but a different ordering\n", !c.equivalent(e));
     }
 };
 
@@ -257,6 +265,22 @@ int main( int argc, char **argv)
     runner.run();
     
     
+    printf("testing tree equivalenec\n");
+    
+    
+    PQTree a("{3 3 4 { 4 5 2 }}");
+    PQTree b("{3 { 5 4 2 } 3 4 }");
+    PQTree c("[3 { 5 4 2 } 3 4 ]");
+    PQTree d("{3 [ 5 4 2 ] 3 4 }");
+    
+    if(d.equivalent(b))
+    {
+        printf("the trees are equivalent\n");
+    }
+    else
+    {
+        printf("the trees are NOT equivalent\n");
+    }
     
     return 0;
 }
