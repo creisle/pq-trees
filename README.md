@@ -32,19 +32,21 @@ PQTRee Expressions:
     set of values in the input vector
 ####string print_expression(bool)
 
-    prints out an expression corresponding to the current tree structure
+    return an expression string corresponding to the current tree structure
 ####bool reduce\_and_replace(int, vector\<int>)
 
     performs reductions on the tree based on the input vector. after reduction. replaces 
-    the full leaves with the new universal tree that was built from the input vector
+    the full leaves with the new universal tree that was built from the input vector. 
+    returns false if the tree is irreducible
 ####bool set\_consecutive(vector\<int>)
 
     Performs reductions on the tree based on the input vector. does not add or remove any 
     leaves from the tree
+    returns false if the tree is irreducible
 ####bool equivalent(PQTree&)
 
     Compares two trees to see if they are equivalent. Trees are equivalent if they impose 
-    the same set of restaints.
+    the same set of restaints. returns true if the trees are equivalent, false otherwise
 
 ##How to use this implementation?
 ####Example: Testing Planarity of an st-numbered input graph from the adjacnecy list
