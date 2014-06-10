@@ -31,6 +31,7 @@ class Node
         virtual std::string print_expression(bool m = false) = 0;
         virtual void update_depth() = 0;
         virtual bool less_than( Node &other ) = 0;
+        virtual void sort() = 0;
         
         //getters
         Node* get_parent();

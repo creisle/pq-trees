@@ -21,6 +21,7 @@ class PQTreeTests : public CppUnit::TestFixture
     CPPUNIT_TEST( testPlanar );
     CPPUNIT_TEST( testConsectuive );
     CPPUNIT_TEST( testConstructExpression );
+    CPPUNIT_TEST( testEquivalent );
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -93,6 +94,30 @@ public:
         
         CPPUNIT_ASSERT_EQUAL(expr_count, count);
         
+    }
+    
+    void testEquivalent()
+    {
+        PQTree a("{ 3 4 5 { 6 7 8 } 9 }");
+        PQTree b("{ 3 5 4 { 6 7 8 } 9 }");
+        PQTree c("[ 3 5 4 { 6 7 8 } 9 ]");
+        PQTree d("{ 3 5 4 [ 6 7 8 ] 9 }");
+        
+        PQTree e("{ 3 5 { 7 8 9 } { 6 7 8 } 9 }");
+        PQTree f("{ 3 5 { 6 7 8 } { 8 7 9 } 9 }");
+        PQTree g("{ 3 5 [ 7 8 9 ] { 6 7 8 } 9 }");
+        PQTree h("{ 3 5 { 6 7 8 } [ 8 7 9 ] 9 }");
+        PQTree i("{ 3 5 { 6 7 8 } [ 9 7 8 ] 9 }");
+        
+        PQTree j("[ 9 { 6 7 8 } 4 5 3]");
+        
+        CPPUNIT_ASSERT_MESSAGE( "pnode reordering, should be equivalent\n", a.equivalent(b));
+        CPPUNIT_ASSERT_MESSAGE( "root qnode should NOT be equivalent\n", !b.equivalent(c));
+        CPPUNIT_ASSERT_MESSAGE( "descendant qnode should NOT be equivalent\n", !b.equivalent(d));
+        CPPUNIT_ASSERT_MESSAGE( "pnode reordering, should be equivalent. found e: "+e.print_expression()+" and f: "+f.print_expression()+"\n", e.equivalent(f));
+        CPPUNIT_ASSERT_MESSAGE( "qnode reordering, should NOT be equivalent. found g: "+g.print_expression()+" and h: "+h.print_expression()+"\n", !g.equivalent(h));
+        CPPUNIT_ASSERT_MESSAGE( "qnode flip, should be equivalent. found h: "+h.print_expression()+" and i: "+i.print_expression()+"\n", h.equivalent(i));
+        CPPUNIT_ASSERT_MESSAGE( "root qnode flip, should be equivalent. found c: "+c.print_expression()+" and j: "+j.print_expression()+"\n", c.equivalent(j));
     }
 };
 
@@ -240,6 +265,7 @@ int main( int argc, char **argv)
     runner.addTest( LeafTests::suite() );
     runner.run();
     
+    /*
     PQTree a("{ 3 4 5 { 6 7 8 } 9 }");
     PQTree b("{ 3 5 4 { 6 7 8 } 9 }");
     
@@ -273,6 +299,6 @@ int main( int argc, char **argv)
         printf("a is NOT equivalent to b\n");
     }
     printf("a: %s\nb: %s\n", a.print_expression().c_str(), b.print_expression().c_str());
-    
+    */
     return 0;
 }

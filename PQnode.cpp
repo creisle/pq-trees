@@ -42,7 +42,6 @@ PQnode::~PQnode()
 
 bool PQnode::less_than(Node& other)
 {
-    printf("pqnode < operator\n");
     if(PQnode *pq = dynamic_cast<PQnode*>(&other))
     {
         if(pq->type!=type)
@@ -58,8 +57,29 @@ bool PQnode::less_than(Node& other)
         }
         else
         {
-            //same type of node
-            return false;
+            if(count_children()>pq->count_children())
+            {
+                return false;
+            }
+            else if(count_children()<pq->count_children())
+            {
+                return true;
+            }
+            else
+            {
+                auto itt = children.begin();
+                auto ito = (pq->children).begin();
+                
+                while(itt!=children.end()&&ito!=((pq->children).end())) //same length only need to worry about one really but this is sfe
+                {
+                    if(!(*itt)->less_than(**ito))
+                    {
+                        return false;
+                    }
+                    ++itt; ++ito;
+                }
+                return true; //returns true if they are equal?
+            }   
         }
     }
     else
@@ -72,31 +92,50 @@ bool PQnode::less_than(Node& other)
 //bubble sort? http://en.wikipedia.org/wiki/Bubble_sort
 void PQnode::sort()
 {
-    bool swapped = true;
-    auto end = children.end();
-    
-    while(swapped&&end!=children.begin())
+    //call sort on all the nodes children first?
+    for(auto it=children.begin(); it!=children.end(); ++it)
     {
-        //printf("pqnode sort() in loop\n");
-        swapped = false;
-        auto prev = children.begin(); //first element
-        auto curr = children.begin(); ++curr; //second element
-        while(curr!=end)
+        (*it)->sort();
+    }
+    
+    if(type==pnode)
+    {
+        //now sort the children
+        bool swapped = true;
+        auto end = children.end();
+        
+        while(swapped&&end!=children.begin())
         {
-            //printf("pqnode sort() in inner loop\n");
-            if((*curr)->less_than(**prev))
+            //printf("pqnode sort() in loop\n");
+            swapped = false;
+            auto prev = children.begin(); //first element
+            auto curr = children.begin(); ++curr; //second element
+            while(curr!=end)
             {
-                //printf("before swap %p and %p\n", *prev, *curr);
-                Node *tmp = *prev;
-                *prev = *curr;
-                *curr = tmp;
-                swapped = true;
-                //printf("after swap %p and %p\n", *prev, *curr);
+                //printf("pqnode sort() in inner loop\n");
+                if((*curr)->less_than(**prev))
+                {
+                    //printf("before swap %p and %p\n", *prev, *curr);
+                    Node *tmp = *prev;
+                    *prev = *curr;
+                    *curr = tmp;
+                    swapped = true;
+                    //printf("after swap %p and %p\n", *prev, *curr);
+                }
+                ++prev;
+                ++curr;
             }
-            ++prev;
-            ++curr;
+            --end;
         }
-        --end;
+    }
+    else if(type==qnode)
+    {
+        Node *st = children.front();
+        Node *end = children.back();
+        if(end->less_than(*st))
+        {
+            children.reverse();
+        }
     }
 }
 

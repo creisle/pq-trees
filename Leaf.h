@@ -17,6 +17,7 @@ class Leaf: public Node
         int value;
         Leaf **leaf_list_ptr;
         bool less_than(Node& other);
+        void sort(){}
         
     public:
         //constructors and destructors
