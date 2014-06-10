@@ -8,16 +8,6 @@ Implementation of Booth and Leuker's (1) PQTree datastructure as described by Yo
 
 A PQ-Tree is a datastructure used in representing all permutations allowed on a given base set, U. The members of the base set are the leaves in the tree and the q-nodes and p-nodes are used in representing the different constraints we wish to apply. children of a p-node must be grouped under that node but their child elements may be permuted randomly with respect to one another. The q-node is more restrictive. Child elements of a q-node may only be reversed.
 
-##How to use this implementation?
-
-provided you are working on a unix or linux system, pull the files and use the makefile to compile
-
-PQTrees can be contructed 3 ways:
-
-    PQTree():           empty
-    PQTree(string):     from an valid expression string
-    PQTree(vector);     from an initial set of values to make a universal tree
-    
 PQTRee Expressions:
 
     pnode   - { }
@@ -58,7 +48,7 @@ PQTRee Expressions:
     Compares two trees to see if they are equivalent. Trees are equivalent if they impose 
     the same set of restaints.
 
-###Examples
+##How to use this implementation?
 ####Example: Testing Planarity of an st-numbered input graph from the adjacnecy list
 
     //adjacency matrix of an st-numbered input graph
@@ -110,4 +100,10 @@ PQTRee Expressions:
 
 1. Booth, K.S., Lueker, G.S.: Testing for the consecutive ones property, interval graphs, and graph planarity using PQ-tree algorithms. J. Comput. Syst. Sci. 13, 335–379 (1976).
 2. Young, S.M.: Implementation of PQ-tree algorithms, (1977).
+
+##Notes:
+
+1. The provided makefile is for unix/linux and compiles with the testing script and you must have cppunit installed for this to work. 
+2. This uses C++11. So be sure to use the approriate flags when compiling with your own project
+3. If you come across any bugs or errors be sure to let me know :)
 
