@@ -28,7 +28,30 @@ PQTRee Expressions:
 
 **Figure 1. Example PQTree. Can be represented by the expression: { 5 1 3 [ 3 {2 4 } [ { 4 5 } 6 2 ] ] }**
     
-##Ways to use the trees?
+###PQTree class
+
+####PQTree::PQTree()
+
+    default constructor
+    
+####PQTree::PQTree(string const)
+
+    non-default constructor. Initializes the PQTree from a valid PQTree expression
+
+####PQTree::PQTree(vector\<int>)
+
+    non-default constructor. Initializes the PQTree with a universal tree based on the set of values in the input vector
+####PQTree::print_expression(bool)
+
+    prints out an expression corresponding to the current tree structure
+####PQTree::reduce\_and_replace(int, vector\<int>)
+
+    performs reductions on the tree based on the input vector. after reduction. replaces the full leaves with the new universal tree that was built from the input vector
+####PQTree::set\_consecutive(vector\<int>)
+
+    Performs reductions on the tree based on the input vector. does not add or remove any leaves from the tree
+####PQTree::equivalent(PQTree&)
+Compares two trees to see if they are equivalent. Trees are equivalent if they impose the same set of restaints.
 
 1. finding interval graphs using the set_consecutive(vector) function
 2. testing planarity of st-numbered graphs using the reduce_and_replace(int, vector)
