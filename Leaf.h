@@ -16,13 +16,13 @@ class Leaf: public Node
     private:
         int value;
         Leaf **leaf_list_ptr;
-        bool less_than(Node& other);
+        bool less_than(Node&);
         void sort(){}
         
     public:
         //constructors and destructors
-        Leaf(Node *p, int v, std::list<Leaf*> &leaflist);
-        Leaf(int v, std::list<Leaf*> &leaflist);
+        Leaf(Node*, int, std::list<Leaf*>&);
+        Leaf(int, std::list<Leaf*>&);
         virtual ~Leaf();
         
         //testing functions

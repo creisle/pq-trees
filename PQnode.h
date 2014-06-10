@@ -22,24 +22,24 @@ class PQnode: public Node
         //functions for tree reduction
         bool reduce_proot(); //for the subroot if it is a pnode
         bool reduce_qroot();
-        bool qreduce(bool direction);
-        bool preduce(bool direction);
-        bool reduce(bool direction); //for descedants of the pertinent subroot
-        Node* group_children(std::list<Node*> &group);
-        size_t grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<Node*> &tmp);
-        bool promote_partial_children(std::list<Node*>::iterator &it, bool direction);
+        bool qreduce(bool);
+        bool preduce(bool);
+        bool reduce(bool); //for descedants of the pertinent subroot
+        Node* group_children(std::list<Node*> &);
+        size_t grab_marks(std::list<Node*>::iterator &, marking, std::list<Node*>&);
+        bool promote_partial_children(std::list<Node*>::iterator&, bool);
         void pop_children(std::list<Node*> &kids);
         
         //funcitons for marking
-        size_t skip_marks(std::list<Node*>::iterator &itr, marking mark);
+        size_t skip_marks(std::list<Node*>::iterator &, marking);
         
         //other
-        bool less_than(Node& other);
+        bool less_than(Node&);
         
     public:
         //constructors and deconstructor
         PQnode();
-        PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t = pnode);
+        PQnode(std::vector<int>, std::list<Leaf*>&, nodetype t = pnode);
         virtual ~PQnode();
         
         //utility functions for the children
@@ -51,8 +51,8 @@ class PQnode: public Node
         //to do with the tree
         bool mark();
         void unmark();
-        bool condense_and_replace(Node *child);
-        bool link_child(Node *child); //DANGEROUS!
+        bool condense_and_replace(Node*);
+        bool link_child(Node*); //DANGEROUS!
         void update_depth();
         
         

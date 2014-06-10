@@ -30,7 +30,7 @@ class Node
         virtual void print() = 0; //now this is pure virtual
         virtual std::string print_expression(bool m = false) = 0;
         virtual void update_depth() = 0;
-        virtual bool less_than( Node &other ) = 0;
+        virtual bool less_than( Node& ) = 0;
         virtual void sort() = 0;
         
         //getters
@@ -41,10 +41,10 @@ class Node
         
         //setters
         virtual void unmark();
-        void set_parent(Node *p);
+        void set_parent(Node*);
         
 };
 
-bool compare_marking(Node *first, Node *second);
+bool compare_marking(Node*, Node*);
 
 #endif
