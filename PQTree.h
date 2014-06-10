@@ -59,6 +59,9 @@ class PQTree
         
         //leaflist functions
         size_t get_leaflist_size();
+        
+        //comparing
+        bool equivalent(PQTree &other);
 };
 
 namespace custom

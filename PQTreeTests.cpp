@@ -24,14 +24,6 @@ class PQTreeTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-
-	void setUp()
-	{
-	}
-    
-    void tearDown()
-    {
-    }
     
     void testPlanar()
     {
@@ -113,14 +105,6 @@ class LeafTests : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-
-	void setUp()
-	{
-	}
-    
-    void tearDown()
-    {
-    }
     
     void testLeafList() //tests adding leaves to ensure they add to the list you pass in correctly
     {
@@ -256,7 +240,39 @@ int main( int argc, char **argv)
     runner.addTest( LeafTests::suite() );
     runner.run();
     
+    PQTree a("{ 3 4 5 { 6 7 8 } 9 }");
+    PQTree b("{ 3 5 4 { 6 7 8 } 9 }");
     
+    std::list<Node*> nodelist;
+    std::list<Leaf*> leaflist;
+    std::vector<int> v = {2, 3, 4};
+    std::vector<int> x = {5, 6, 7};
+    nodelist.push_back(new PQnode(v, leaflist, qnode));
+    nodelist.push_back(new PQnode(x, leaflist));
+    nodelist.push_back(new Leaf(1, leaflist));
+    nodelist.push_back(new Leaf(8, leaflist));
+    nodelist.push_back(new Leaf(2, leaflist));
+    
+    PQnode root;
+    for(auto it=nodelist.begin(); it!=nodelist.end(); ++it)
+    {
+        root.link_child(*it);
+    }
+    printf("nodelist: %s\n", root.print_expression().c_str());
+    root.sort();
+    printf("nodelist: %s\n", root.print_expression().c_str());
+    
+    printf("a: %s\nb: %s\n", a.print_expression().c_str(), b.print_expression().c_str());
+    
+    if(a.equivalent(b))
+    {
+        printf("a is equivalent to b\n");
+    }
+    else
+    {
+        printf("a is NOT equivalent to b\n");
+    }
+    printf("a: %s\nb: %s\n", a.print_expression().c_str(), b.print_expression().c_str());
     
     return 0;
 }

@@ -17,6 +17,7 @@ Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist)
     depth = p->get_depth() +1;
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
+    type = leafnode;
 }
 
 Leaf::Leaf(int v, std::list<Leaf*> &leaflist)
@@ -26,6 +27,7 @@ Leaf::Leaf(int v, std::list<Leaf*> &leaflist)
     value = v;
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
+    type = leafnode;
 }
 
 
@@ -39,6 +41,22 @@ Leaf::~Leaf()
         leaf_list_ptr = NULL;
     }
     
+}
+
+bool Leaf::less_than(Node& other)
+{
+    if(Leaf *lf = dynamic_cast<Leaf *>(&other))
+    {
+        if(lf->value>value)
+        {
+            return true;
+        }
+    }
+    else
+    {
+        return true;
+    }
+    return false;
 }
 
 void Leaf::print()

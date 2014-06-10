@@ -425,6 +425,13 @@ size_t PQTree::get_leaflist_size()
     return leaflist.size();
 }
 
+bool PQTree::equivalent(PQTree &other)
+{
+    root->sort();
+    (other.root)->sort();
+    return custom::compare(print_expression(), other.print_expression());
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * function: compare(std::string s1, std::string s2)
  * purpose: compares two strings for equality ignoring spaces (' ')

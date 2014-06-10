@@ -16,6 +16,8 @@ class Leaf: public Node
     private:
         int value;
         Leaf **leaf_list_ptr;
+        bool less_than(Node& other);
+        
     public:
         //constructors and destructors
         Leaf(Node *p, int v, std::list<Leaf*> &leaflist);

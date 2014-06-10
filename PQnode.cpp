@@ -40,6 +40,66 @@ PQnode::~PQnode()
     children.clear();
 }
 
+bool PQnode::less_than(Node& other)
+{
+    printf("pqnode < operator\n");
+    if(PQnode *pq = dynamic_cast<PQnode*>(&other))
+    {
+        if(pq->type!=type)
+        {
+            if(type==pnode)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        else
+        {
+            //same type of node
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+//bubble sort? http://en.wikipedia.org/wiki/Bubble_sort
+void PQnode::sort()
+{
+    bool swapped = true;
+    auto end = children.end();
+    
+    while(swapped&&end!=children.begin())
+    {
+        //printf("pqnode sort() in loop\n");
+        swapped = false;
+        auto prev = children.begin(); //first element
+        auto curr = children.begin(); ++curr; //second element
+        while(curr!=end)
+        {
+            //printf("pqnode sort() in inner loop\n");
+            if((*curr)->less_than(**prev))
+            {
+                //printf("before swap %p and %p\n", *prev, *curr);
+                Node *tmp = *prev;
+                *prev = *curr;
+                *curr = tmp;
+                swapped = true;
+                //printf("after swap %p and %p\n", *prev, *curr);
+            }
+            ++prev;
+            ++curr;
+        }
+        --end;
+    }
+}
+
 void PQnode::print()
 {
     printf("+++++++++++++ node-type: %s  +++++++++++\n", (type==pnode)? "P": "Q");

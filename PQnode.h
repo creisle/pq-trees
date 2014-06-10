@@ -33,6 +33,9 @@ class PQnode: public Node
         //funcitons for marking
         size_t skip_marks(std::list<Node*>::iterator &itr, marking mark);
         
+        //other
+        bool less_than(Node& other);
+        
     public:
         //constructors and deconstructor
         PQnode();
@@ -58,11 +61,11 @@ class PQnode: public Node
         
         //other
         void set_type(nodetype t);
+        void sort();
         
         //mainly for testing
         std::string print_expression(bool m = false);
         void print();
-        
 };
 
 #endif
