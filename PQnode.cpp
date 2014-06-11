@@ -293,7 +293,7 @@ void PQnode::sort_children()
         while( it!=children.end() )
         {
             size_t ecount = skip_marks(it, empty);
-            size_t pcount = skip_marks(it, partial);
+            skip_marks(it, partial);
             size_t fcount = skip_marks(it, full);
             size_t p2count = skip_marks(it, partial);
             size_t e2count = skip_marks(it, empty);
@@ -464,7 +464,7 @@ bool PQnode::reduce_proot()
         }
     }
     
-    size_t fcount = grab_marks(it, full, full_list);  
+    grab_marks(it, full, full_list);  
     
     children.clear();
     children.splice(children.end(), empty_list);//add the empty nodes back (still have the same parent)
