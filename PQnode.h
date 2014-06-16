@@ -13,6 +13,12 @@
 
 //forward declarations
 
+/**** enums from Node class
+enum print_option {option_none, option_marking, option_depth, option_src };
+enum nodetype {pnode , qnode, leafnode};
+enum marking {empty, partial, full};
+*/
+
 
 class PQnode: public Node
 {
@@ -22,12 +28,12 @@ class PQnode: public Node
         //functions for tree reduction
         bool reduce_proot(); //for the subroot if it is a pnode
         bool reduce_qroot();
-        bool qreduce(bool);
-        bool preduce(bool);
-        bool reduce(bool); //for descedants of the pertinent subroot
+        bool qreduce(direction_type);
+        bool preduce(direction_type);
+        bool reduce(direction_type); //for descedants of the pertinent subroot
         Node* group_children(std::list<Node*> &);
         size_t grab_marks(std::list<Node*>::iterator &, marking, std::list<Node*>&);
-        bool promote_partial_children(std::list<Node*>::iterator&, bool);
+        bool promote_partial_children(std::list<Node*>::iterator&, direction_type);
         void pop_children(std::list<Node*> &kids);
         
         //funcitons for marking
@@ -39,7 +45,9 @@ class PQnode: public Node
     public:
         //constructors and deconstructor
         PQnode();
-        PQnode(std::vector<int>, std::list<Leaf*>&, nodetype t = pnode);
+        PQnode(std::vector<int>, std::list<Leaf*>&, nodetype t = pnode); //default src = -1
+        PQnode(std::vector<int>, std::list<Leaf*>&, int src, nodetype t = pnode); //sepcific source
+        
         virtual ~PQnode();
         
         //utility functions for the children
@@ -51,8 +59,8 @@ class PQnode: public Node
         //to do with the tree
         bool mark();
         void unmark();
-        bool condense_and_replace(Node*);
-        bool link_child(Node*); //DANGEROUS!
+        std::list<int> condense_and_replace(Node*);
+        bool link_child(Node*, direction_type dir = right); //DANGEROUS!
         void update_depth();
         
         
@@ -64,8 +72,14 @@ class PQnode: public Node
         void sort();
         
         //mainly for testing
-        std::string print_expression(bool m = false);
+        std::string print_expression(print_option m = option_none);
         void print();
 };
+
+namespace custom
+{
+    void print(std::list<int>);
+    void print(std::vector<int>);
+}
 
 #endif

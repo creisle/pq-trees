@@ -15,6 +15,8 @@
 #pragma GCC diagnostic ignored "-Wc++11-extensions"
 #pragma GCC diagnostic ignored "-Wpadded"
 
+
+
 class PQTreeTests : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE( PQTreeTests );
@@ -40,21 +42,57 @@ public:
             {0} // 0 is not actually a node. but just so we can check the final reduction
         };
         
-        PQTree tree(adj[0]);
+        PQTree tree(adj[0], 1);
+        //std::cout<< tree.print_expression(option_src) <<"\n";
         
         for(size_t i=1; i<adj.size(); i++)
         {
             int curr = (int)(i+1);
             std::vector<int> v = adj[i];
-            if(!tree.reduce_and_replace(curr, v))
+            std::list<int> srcs = tree.reduce_and_replace(curr, v); //this is the lists we will use to produce the embedding
+            if(srcs.empty())
+            {
+                fprintf(stderr, "error in building the and reducing the tree\n");
+                exit(1);
+            }
+            //std::cout<< tree.print_expression(option_src) +"\n";
+            //printf("the list at %d is ", curr);
+            //custom::print_list(srcs);
+        }
+        std::string expected = "{ 0 }";
+        std::string message = "expected { 0 } but found "+tree.print_expression()+"\n";
+        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expected, tree.print_expression()));
+        
+        std::vector< std::vector<int> > adj2 =
+        {
+            {2, 3, 10}, //1
+            {3, 6, 8},  //2
+            {4, 10},    //3
+            {5, 6, 10}, //4
+            {6, 9},     //5
+            {7, 9},     //6
+            {8, 9},     //7
+            {9},        //8
+            {10},       //9
+        };
+        
+        PQTree tree2(adj2[0], 1);
+        
+        for(size_t i=1; i<adj2.size(); i++)
+        {
+            int curr = (int)(i+1);
+            std::vector<int> v = adj2[i];
+            std::list<int> srcs = tree2.reduce_and_replace(curr, v); //this is the lists we will use to produce the embedding
+            if(srcs.empty())
             {
                 fprintf(stderr, "error in building the and reducing the tree\n");
                 exit(1);
             }
         }
-        std::string expected = "{ 0 }";
-        std::string message = "expected { 0 } but found "+tree.print_expression()+"\n";
-        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expected, tree.print_expression()));
+        
+        expected = "{ 10  [ 10  10  10 ] }";
+        message = "expected { 10  [ 10  10  10 ] } but found "+tree.print_expression()+"\n";
+        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expected, tree2.print_expression()));
     }
     
     void testConsectuive() //purpose: tests a consectutive ones matrix example
@@ -62,16 +100,21 @@ public:
         bool pass = true;
         std::vector< std::vector<int> > mat =
         {
-            {1, 2, 5}, //values that are one in our matrix
-            {3, 4, 5},
-            {1, 5},
+            {2, 3, 4}, //values that are one in our matrix
+            {1, 2, 3},
+            {4, 5},
+            {2, 3},
             {3, 4},
-            {2, 3}
+            {1},
+            {5}
         };
         PQTree tree("{1, 2, 3, 4, 5}");
         
         for(size_t i=0; i<mat.size(); ++i)
         {
+            //std::cout << "\ncurrent tree: " << tree.print_expression() << " adding ";
+            //custom::print(mat[i]);
+            //std::cout << " contraint\n";
             if(!tree.set_consecutive(mat[i]))
             {
                 pass = false; break;
@@ -265,7 +308,7 @@ int main( int argc, char **argv)
     runner.addTest( LeafTests::suite() );
     runner.run();
     
-    
-    
     return 0;
 }
+
+

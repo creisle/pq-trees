@@ -15,6 +15,8 @@
 
 enum nodetype {pnode , qnode, leafnode};
 enum marking {empty, partial, full};
+enum print_option {option_none, option_marking, option_depth, option_src };
+enum direction_type {left, right};
 
 class Node
 {
@@ -28,7 +30,7 @@ class Node
         Node();
         virtual ~Node(){} //destructor. use this to get rid of crap "new"'d inside the constructor
         virtual void print() = 0; //now this is pure virtual
-        virtual std::string print_expression(bool m = false) = 0;
+        virtual std::string print_expression(print_option m = option_none) = 0;
         virtual void update_depth() = 0;
         virtual bool less_than( Node& ) = 0;
         virtual void sort() = 0;

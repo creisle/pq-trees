@@ -11,23 +11,30 @@
 #include "Node.h"
 #include <string>
 
+/**** enums from Node class
+enum print_option {option_none, option_marking, option_depth, option_src };
+enum nodetype {pnode , qnode, leafnode};
+enum marking {empty, partial, full};
+*/
+
 class Leaf: public Node
 {
     private:
         int value;
+        int source; //value used to keep track for when we produce the embedding
         Leaf **leaf_list_ptr;
         bool less_than(Node&);
         void sort(){}
         
     public:
         //constructors and destructors
-        Leaf(Node*, int, std::list<Leaf*>&);
-        Leaf(int, std::list<Leaf*>&);
+        Leaf(Node*, int, std::list<Leaf*>&, int src = -1);
+        Leaf(int, std::list<Leaf*>&, int src = -1);
         virtual ~Leaf();
         
         //testing functions
         void print();
-        std::string print_expression(bool m = false);
+        std::string print_expression(print_option m = option_none);
         
         //update and setters
         void mark();
@@ -36,6 +43,7 @@ class Leaf: public Node
         
         //getters
         int get_value();
+        int get_source();
 };
 
 #endif

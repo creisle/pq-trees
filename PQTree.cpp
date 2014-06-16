@@ -17,9 +17,9 @@ PQTree::PQTree()
     root = NULL;
 }
 
-PQTree::PQTree(std::vector<int> leaves)
+PQTree::PQTree(std::vector<int> leaves, int src/*-1*/)
 {
-    root = new PQnode(leaves, leaflist);
+    root = new PQnode(leaves, leaflist, src);
 }
 
 PQTree::PQTree(std::string const expr)
@@ -69,7 +69,7 @@ void PQTree::print()
  * return: false is an error occurs or the tree is irreducible, true otherwise
  * note: use this for planarity testing
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
+std::list<int> PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
 {
     if(follow){ printf("PQTree::reduce_and_replace(int value, std::vector<int> tree_in)\n"); }
     
@@ -78,21 +78,26 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
     values.push_back(v);
     
     PQnode* subroot = reduce(values); //pertinent subroot
-    if(subroot==NULL){ return false; }
+    if(subroot==NULL){
+        fprintf(stderr, "%s; could not find the appropriate subroot\n", print_expression().c_str());
+        std::list<int> srcs;
+        return srcs;
+    }
     
     Node *child;
     if(tree_in.size()==1)
     {
-        child = new Leaf(tree_in[0], leaflist);
+        child = new Leaf(tree_in[0], leaflist, v);
     }else
     {
-        child = new PQnode(tree_in, leaflist);
+        child = new PQnode(tree_in, leaflist, v);
     }
-    if(!replace_full_with(child)){ return false; }
     
+    std::list<int> srcs = replace_full_with(child);
+    if(srcs.empty()){ return srcs; }
     subroot->unmark();
     
-    return true;
+    return srcs;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -107,14 +112,20 @@ PQnode* PQTree::reduce(std::vector<int> values)
     if(follow){ printf("PQTree::reduce(int value)\n"); }
     
     PQnode* subroot = mark(values); //pertinent subroot
-    if(follow){ printf("PQTree::reduce(int value). marked as "); print_expression(true); }
+    //std::cout << "after marking: " << print_expression(option_marking) <<"\n";
+    if(follow){ printf("PQTree::reduce(int value). marked as %s\n", print_expression(option_marking).c_str()); }
     if(subroot!=NULL)
     {
-        if(subroot->reduce())
+        if(subroot->get_mark()==full)
         {
             return subroot;
         }
-    }else
+        else if(subroot->reduce())
+        {
+            return subroot;
+        }
+    }
+    else
     {
         fprintf(stderr, "pertinent subroot not found, could be invalid leaf values\n");
     }
@@ -147,12 +158,13 @@ bool PQTree::set_consecutive(std::vector<int> values)
  *      while conserving the position
  * return: false is an error occurs, true otherwise
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool PQTree::replace_full_with(Node *child)
+std::list<int> PQTree::replace_full_with(Node *child)
 {
     if(follow){ printf("PQTree::replace_full_with(Node *child)\n"); }
+    std::list<int> srcs;
     
     Node* parent = NULL;
-    if(child==NULL){ return false; }
+    if(child==NULL){ return srcs; }
     std::list<Leaf*> fulls = get_pertinent();
     
     for(std::list<Leaf*>::iterator it=fulls.begin(); it!=fulls.end(); ++it)
@@ -161,8 +173,8 @@ bool PQTree::replace_full_with(Node *child)
         {
             if((*it)->get_parent()!=parent)
             {
-                fprintf(stderr, "not all full nodes have the same parent\n");
-                return false;
+                fprintf(stderr, "%s, not all full nodes have the same parent\n", print_expression().c_str());
+                return srcs;
             }
         }else
         {
@@ -172,18 +184,19 @@ bool PQTree::replace_full_with(Node *child)
     
     if(PQnode* temp = dynamic_cast<PQnode*>(parent))
     {
-        if(!(temp->condense_and_replace(child)))
+        srcs.merge(temp->condense_and_replace(child));
+        if(srcs.empty())
         {
             fprintf(stderr, "condense failed\n");
-            return false;
+            return srcs;
         }
         if(temp->count_children()<3)
         {
             temp->set_type(pnode);
         }
-        
     }
-    return true;
+    //std::cout << "AFTER condesation: " << print_expression() << "\n";
+    return srcs;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -215,16 +228,17 @@ PQnode* PQTree::mark(std::vector<int> v)
     
     //at this point we have a list of potential partials sorted by depth with no duplicates
     //now we need to mark these nodes.... and then their parents until there is only one node left in the partials list
+    
     while(partials.size()>1)
     {
         PQnode *curr = partials.front();//always deal with the front element first
+        //std::cout << "currently looking at the node: " << curr->print_expression(option_depth) << "\n";
         if(!(curr->mark())) //mark the node
         {
             return NULL;
         }
         PQnode *p = (PQnode*)curr->get_parent(); //any parent in the tree will never be a leaf since they cannot have children. therefore this casting is safe
         partials.pop_front(); //remove the curr node and destroy the reference
-        
         add_unique_by_depth(p, partials);
     }
     if(!partials.empty())
@@ -246,21 +260,35 @@ PQnode* PQTree::mark(std::vector<int> v)
  *      list and maintains the decreasing depth by property of the list
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 void PQTree::add_unique_by_depth(PQnode *p, std::list<PQnode*> &partials){
+    
+    bool found = false;
+    
     if(partials.empty())
     {
         partials.push_back(p);
-    }else
+        found = true;
+    }
+    else
     {
-        for(std::list<PQnode*>::iterator it=partials.begin(); it!=partials.end(); ++it) //iterates through our list of partials
-        { 
-            if((*it)->get_depth()>=p->get_depth())
+        for(std::list<PQnode*>::iterator it=partials.begin(); it!=partials.end()&&!found; ++it) //iterates through our list of partials
+        {
+            if(p->get_depth()<=(*it)->get_depth()) //(*it)->get_depth()>=p->get_depth()
             {
-                if(p==(*it)){ break; }
-            }else
+                if(p==(*it))
+                {
+                    found = true;
+                }
+            }
+            else
             {
+                found = true;
                 partials.insert(it, p);
             }
         }
+    }
+    if(!found)
+    {
+        partials.push_back(p); //got to the end of the list
     }
 }
 
@@ -271,9 +299,9 @@ void PQTree::add_unique_by_depth(PQnode *p, std::list<PQnode*> &partials){
  * purpose: prints out an expression corresponding to the current tree structure
  * returns: the expression string
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-std::string PQTree::print_expression(bool mark/*false*/)
+std::string PQTree::print_expression(print_option p/*option_none*/)
 {
-    std::string result = root->print_expression(mark);
+    std::string result = root->print_expression(p);
     return result;
 }
 
@@ -485,7 +513,21 @@ bool custom::contains(std::vector<int> vec, int v)
     return false;
 }
 
-
+void PQTree::print_leaflist(bool mark)
+{
+    for(auto it=leaflist.begin(); it!=leaflist.end(); ++it)
+    {
+        if(*it==NULL)
+        {
+            printf("NULL ");
+        }
+        else
+        {
+            printf("%d ", (*it)->get_value());
+        }
+    }
+    printf("\n");
+}
 
 
 

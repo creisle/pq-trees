@@ -8,23 +8,25 @@
 static bool test_leaks = false;
 
 
-Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist)
+Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist, int src /*-1*/)
     : Node()
 {
     if(test_leaks){ printf("LEAF ++\n"); }
     parent = p;
     value = v;
+    source = src;
     depth = p->get_depth() +1;
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
     type = leafnode;
 }
 
-Leaf::Leaf(int v, std::list<Leaf*> &leaflist)
+Leaf::Leaf(int v, std::list<Leaf*> &leaflist, int src /*-1*/)
     : Node()
 {
     if(test_leaks){ printf("LEAF ++\n"); }
     value = v;
+    source = src;
     leaflist.push_back(this);
     leaf_list_ptr = &leaflist.back();
     type = leafnode;
@@ -68,24 +70,35 @@ void Leaf::print()
 void Leaf::mark(){ node_mark = full;}
 int Leaf::get_value(){ return value; }
 void Leaf::unmark(){ node_mark = empty; }
+int Leaf::get_source(){ return source; }
 
-std::string Leaf::print_expression(bool print_mark /*false*/)
+std::string Leaf::print_expression(print_option print_mark /*option_none*/)
 {
     std::string result = "";
-    if(print_mark)
+    switch(print_mark)
     {
-        switch(node_mark)
-        {
-            case full:
-                result += "f:";
-                break;
-            case partial:
-                result += "p:";
-                break;
-            case empty:
-                result += "e:";
-                break;
-        }
+        case option_marking:
+            switch(node_mark)
+            {
+                case full:
+                    result += "f:";
+                    break;
+                case partial:
+                    result += "p:";
+                    break;
+                case empty:
+                    result += "e:";
+                    break;
+            }
+            break;
+        case option_depth:
+            result += std::to_string(depth)+":";;
+            break;
+        case option_src:
+            result += std::to_string(source)+":";
+            break;
+        default:
+            break;
     }
     result += std::to_string(value);
     return result;

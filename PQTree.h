@@ -36,7 +36,7 @@ class PQTree
         std::list<Leaf*> mark_pertinent(std::vector<int> values);
         
         //reduction
-        bool replace_full_with(Node*);
+        std::list<int> replace_full_with(Node*);
         PQnode* reduce(std::vector<int>);
         std::list<Leaf*> get_pertinent();
         
@@ -45,16 +45,16 @@ class PQTree
         //constructors and destructor
         PQTree();
         PQTree(std::string const);
-        PQTree(std::vector<int>);
+        PQTree(std::vector<int>, int src=-1);
         virtual ~PQTree();
         
         //printing and testing functions
         void print(); //iterates recusively through the tree and prints out leaves and nodes
-        std::string print_expression(bool mark = false); //prints an expression respresenting the tree structure and contents
+        std::string print_expression(print_option p = option_none); //prints an expression respresenting the tree structure and contents
         void print_leaflist(bool detail = false); //prints the contents of the leaflist
         
         //reduction opertaions
-        bool reduce_and_replace(int, std::vector<int>); //planarity testing
+        std::list<int> reduce_and_replace(int, std::vector<int>); //planarity testing
         bool set_consecutive(std::vector<int>); //for testing consectutive ones of a matrix
         
         //leaflist functions

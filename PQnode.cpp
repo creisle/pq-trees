@@ -16,14 +16,28 @@ PQnode::PQnode()
     type = pnode;
 }
 
-PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*pnode*/)
+PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*pnode*/) //src default, nodetype def or spec
+    : Node()
+{
+    if(test_leaks){ printf("PQNODE ++\n");}
+    int src = -1;
+    
+    for(size_t i=0; i<leaves.size(); ++i)
+    {
+        Leaf *lf = new Leaf(this, leaves[i], leaflist, src);
+        children.push_back(lf);
+    }
+    set_type(t);
+}
+
+PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, int src, nodetype t/*pnode*/) //src spec, nodetype def or spec
     : Node()
 {
     if(test_leaks){ printf("PQNODE ++\n");}
     
     for(size_t i=0; i<leaves.size(); ++i)
     {
-        Leaf *lf = new Leaf(this, leaves[i], leaflist);
+        Leaf *lf = new Leaf(this, leaves[i], leaflist, src);
         children.push_back(lf);
     }
     set_type(t);
@@ -341,23 +355,31 @@ void PQnode::unmark()
     }
 }
 
-std::string PQnode::print_expression(bool m/*false*/)
+std::string PQnode::print_expression(print_option print_mark/*false*/)
 {
     std::string result = "";
-    if(m)
+
+    switch( print_mark )
     {
-        switch(node_mark)
-        {
-            case full:
-                result += "f:";
-                break;
-            case empty:
-                result += "e:";
-                break;
-            case partial:
-                result += "p:";
-                break;
-        }
+        case option_marking:
+            switch(node_mark)
+            {
+                case full:
+                    result += "f:";
+                    break;
+                case empty:
+                    result += "e:";
+                    break;
+                case partial:
+                    result += "p:";
+                    break;
+            }
+            break;
+        case option_depth:
+            result += std::to_string(depth)+":";
+            break;
+        default:
+            break;
     }
     if(type==qnode)
     {
@@ -370,7 +392,7 @@ std::string PQnode::print_expression(bool m/*false*/)
     for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it)
     {
         result += " ";
-        result += (*it)->print_expression(m);
+        result += (*it)->print_expression(print_mark);
         result += " ";
     }
     if(type==qnode)
@@ -418,7 +440,7 @@ bool PQnode::reduce()
 bool PQnode::reduce_proot()
 {
     if(follow){ printf("PQnode::reduce_proot()\n"); }
-    
+    //std::cout << "BEFORE reduction node = " << print_expression(option_marking) << "\n";
     std::list<Node*> empty_list;
     std::list<Node*> partials_list; //can only ever have two elements, already resticed from marking
     std::list<Node*> sec_partials_list;
@@ -434,7 +456,7 @@ bool PQnode::reduce_proot()
         PQnode *ch = dynamic_cast<PQnode*>(*it);
         if(ch&&(*it)->get_mark()==partial) //add all the children of the node lower than this one
         {
-            if(ch->reduce(true)) // RECURSION
+            if(ch->reduce(right)) // RECURSION
             {
                 ch->pop_children(partials_list);
             }
@@ -452,7 +474,7 @@ bool PQnode::reduce_proot()
         PQnode *ch = dynamic_cast<PQnode*>(*it);
         if(ch&&(*it)->get_mark()==partial) //add all the children of the node lower than this one
         {
-            if(ch->reduce(false)) //important! this makes the node group to the left
+            if(ch->reduce(left)) //important! this makes the node group to the left
             { 
                 ch->pop_children(sec_partials_list);
             }
@@ -519,7 +541,7 @@ bool PQnode::reduce_proot()
         sec_partials_list.clear();
         set_type(qnode);
     }
-    
+    //std::cout << "AFTER reduction node = " << print_expression(option_marking) << "\n";
     update_depth();
     return true;
     
@@ -563,14 +585,14 @@ bool PQnode::reduce_qroot()
     std::list<Node*>::iterator it=children.begin();
     skip_marks(it, empty);
     
-    if(!promote_partial_children(it, true)) //first potential partial node
+    if(!promote_partial_children(it, right)) //first potential partial node
     {
         return false;
     }
     
     skip_marks(it, full); //skip the middle full nodes
     
-    if(!promote_partial_children(it, false)) //next potential partial node
+    if(!promote_partial_children(it, left)) //next potential partial node
     {
         return false;
     }
@@ -590,7 +612,7 @@ bool PQnode::reduce_qroot()
  *      true: promotion was successfull
  *      false: promotion failed
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, bool direction)
+bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, direction_type dir/*right*/)
 {
     std::list<Node*> partials_list;
     if(it!=children.end())
@@ -600,7 +622,7 @@ bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, bool direc
         {
             it = children.erase(it);
             
-            if(curr->reduce(direction)) //recursively deal with partial node
+            if(curr->reduce(dir)) //recursively deal with partial node
             {
                 Node *temp = curr->pop_child();
                 while(temp!=NULL)
@@ -636,15 +658,15 @@ bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, bool direc
  *      true: reduction worked.
  *      false: reduction failed
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool PQnode::reduce(bool direction)
+bool PQnode::reduce(direction_type dir/*right*/)
 {    
     if(type==pnode) //if a p node. call ordering funciton
     { 
-        return preduce(direction);
+        return preduce(dir);
     }
     else //if qnode, don't. but can reverse to ensure empty children are at the head of the list
     { 
-        return qreduce(direction);
+        return qreduce(dir);
     }
 }
 
@@ -659,15 +681,27 @@ bool PQnode::reduce(bool direction)
  *      true: reduction worked.
  *      false: reduction failed
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool PQnode::preduce(bool direction)
+bool PQnode::preduce(direction_type dir/*right*/)
 {
     if(follow){ printf("PQnode::preduce(bool direction)\n"); }
+    //std::cout << "BEFORE reduction node = " << print_expression(option_marking) << "\n";
+    
+    //if this node is a totally full node do nothing
+    if(node_mark==full)
+    {
+        return true;
+    }
+    else if(node_mark==empty)
+    {
+        return true;
+    }
     
     std::list<Node*> empty_list;
     std::list<Node*> partials_list;
     std::list<Node*> full_list; //temporary list to store directed node stuff
     size_t ecount;
     size_t fcount;
+    size_t pcount;
     
     sort_children();
     
@@ -681,7 +715,7 @@ bool PQnode::preduce(bool direction)
         {
             //recurse
             //add all the children of the node lower than this one
-            if(ch->reduce(direction))
+            if(ch->reduce(dir))
             {
                 Node *temp = ch->pop_child();
                 while(temp!=NULL)
@@ -698,6 +732,7 @@ bool PQnode::preduce(bool direction)
     }
     
     fcount = grab_marks(it, full, full_list);
+    pcount = partials_list.size();
     
     if(it!=children.end())
     {
@@ -706,25 +741,32 @@ bool PQnode::preduce(bool direction)
     
     children.clear(); //remove so we can add back in in the right order after the merging
     
-    link_child(group_children(empty_list)); //now group the children from the empty list into a pnode if necessary (more than 2)
+    //printf("pcount: %zu\tfcount: %zu\tecount: %zu\n", pcount, fcount, ecount);
+    //std::cout << "DURING reduction node = " << print_expression(option_marking) << "\n";
     
-    if(!partials_list.empty())
+    //this node becomes the new parent node b/c there are no empty children
+    for(it=partials_list.begin(); it!=partials_list.end(); ++it)
     {
-        //now deal with the partial node children
-        for(it=partials_list.begin(); it!=partials_list.end(); ++it)
-        {
-            link_child(*it);
-        }
-        partials_list.clear();
+        link_child(*it);
+    }
+    //std::cout << "DURING reduction node = " << print_expression(option_marking) << "\n";
+    
+    partials_list.clear();
+    link_child(group_children(full_list), dir); //now finally the full node children. again you need to group them
+    //std::cout << "DURING reduction node = " << print_expression(option_marking) << "\n";
+    
+    if(dir==right)
+    {
+        link_child(group_children(empty_list), left);
+    }
+    else
+    {
+        link_child(group_children(empty_list), right);
     }
     
-    link_child(group_children(full_list)); //now finally the full node children. again you need to group them
-    set_type(qnode);
+    set_type(qnode);        
     
-    if(!direction)
-    {
-        children.reverse();
-    }
+    //std::cout << "AFTER reduction node = " << print_expression(option_marking) << "\n";
     return true;
 }
 
@@ -738,7 +780,7 @@ bool PQnode::preduce(bool direction)
  *      true: reduction worked.
  *      false: reduction failed
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool PQnode::qreduce(bool direction)
+bool PQnode::qreduce(direction_type dir/*right*/)
 {
     if(follow){ printf("PQnode::qreduce(bool direction)\n"); }
 
@@ -750,7 +792,7 @@ bool PQnode::qreduce(bool direction)
     
     std::list<Node*>::iterator it=children.begin();
     count = skip_marks(it, empty); //node should now be partial or full
-    if(!promote_partial_children(it, direction))
+    if(!promote_partial_children(it, dir))
     {
         return false;
     }
@@ -759,10 +801,6 @@ bool PQnode::qreduce(bool direction)
     if(it!=children.end())
     {
         return false;
-    }
-    if(direction==false)
-    {
-        children.reverse();
     }
     return true;
 }
@@ -811,7 +849,7 @@ Node* PQnode::group_children(std::list<Node*> &group)
  *      parameters, also updates the depth of the child and its descedants
  * return: false if the input it NULL, true if the linking succeeds
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool PQnode::link_child(Node *child)
+bool PQnode::link_child(Node *child, direction_type dir/*right*/)
 {
     if(follow){ printf("PQnode::link_child(Node *child)\n"); }
     
@@ -819,9 +857,19 @@ bool PQnode::link_child(Node *child)
     {
         return false;
     }
-    child->set_parent(this);
-    children.push_back(child);
-    child->update_depth();
+    if(children.empty()||dir==right)
+    {
+        child->set_parent(this);
+        children.push_back(child);
+        child->update_depth();
+    }
+    else
+    {
+        child->set_parent(this);
+        children.push_front(child);
+        child->update_depth();
+    }
+    
     return true;
 }
 
@@ -908,13 +956,14 @@ void PQnode::set_type(nodetype t)
  *      with the input node
  * return: false: if an error occurs or the condesation is impossible; true if success
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool PQnode::condense_and_replace(Node *child)
+std::list<int> PQnode::condense_and_replace(Node *child)
 {
     if(follow){ printf("PQnode::condense_and_replace(Node *child)\n"); }
+    std::list<int> source_list;
     if(child==NULL)
     {
         fprintf(stderr, "ERROR condense_and_replace: cannot replace with a null\n");
-        return false;
+        return source_list;
     }
     std::list<Node*>::iterator it=children.begin();
     while(it!=children.end())
@@ -928,7 +977,8 @@ bool PQnode::condense_and_replace(Node *child)
             else
             {
                 fprintf(stderr, "ERROR: condense_leaves() - this node has full children that are not leaves\n");
-                return false;
+                source_list.clear();
+                return source_list;
             }
         }
         ++it;
@@ -941,17 +991,19 @@ bool PQnode::condense_and_replace(Node *child)
             if(Leaf* lf = dynamic_cast<Leaf*>(*it))
             {
                 it = children.erase(it);
+                source_list.push_back(lf->get_source());
                 delete lf;
             }
             else
             {
                 fprintf(stderr, "ERROR: condense_leaves() - this node has full children that are not leaves\n");
-                return false;
+                source_list.clear();
+                return source_list;
             }
         }
         else
         {
-            ++it;
+            break;
         }
     }
     //now the iterator is at the item just after the last full leaf
@@ -959,5 +1011,22 @@ bool PQnode::condense_and_replace(Node *child)
     child->set_parent(this);
     child->update_depth();
     
-    return true;
+    return source_list;
+}
+
+void custom::print(std::list<int> target)
+{
+    for(auto it = target.begin(); it!=target.end(); ++it)
+    {
+        std::cout << *it << " ";
+    }
+    std::cout << "\n";
+}
+
+void custom::print(std::vector<int> target)
+{
+    for(auto it = target.begin(); it!=target.end(); ++it)
+    {
+        std::cout << *it << " ";
+    }
 }
