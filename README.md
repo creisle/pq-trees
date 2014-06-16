@@ -53,7 +53,7 @@ PQTRee Expressions:
 ##How to use this implementation?
 ####Example: Testing Planarity of an st-numbered input graph from the adjacnecy list
 
-![Alt text](st_graph_example.jpg "st_graph")
+![Alt text](st_graph_ex.jpg "st_graph")
 
     //adjacency matrix of an st-numbered input graph
     std::vector< std::vector<int> > adj2 =
