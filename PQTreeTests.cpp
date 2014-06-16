@@ -86,7 +86,7 @@ public:
             if(srcs.empty())
             {
                 fprintf(stderr, "error in building the and reducing the tree\n");
-                exit(1);
+                break;
             }
         }
         
