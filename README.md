@@ -33,11 +33,13 @@ PQTRee Expressions:
 ####string print_expression(bool)
 
     return an expression string corresponding to the current tree structure
-####bool reduce\_and_replace(int, vector\<int>)
+####list<int> reduce\_and_replace(int, vector\<int>)
 
     performs reductions on the tree based on the input vector. after reduction. replaces 
     the full leaves with the new universal tree that was built from the input vector. 
-    returns false if the tree is irreducible
+    returns an empty list if the tree is irreducible. Otherwise, the list returned is the 
+    list of sources for the replaced full nodes which will be useful in producing the 
+    embedding after testing planarity
 ####bool set\_consecutive(vector\<int>)
 
     Performs reductions on the tree based on the input vector. does not add or remove any 
@@ -51,43 +53,53 @@ PQTRee Expressions:
 ##How to use this implementation?
 ####Example: Testing Planarity of an st-numbered input graph from the adjacnecy list
 
+![Alt text](st_graph_example.jpg "st_graph")
+
     //adjacency matrix of an st-numbered input graph
-    std::vector< std::vector<int> > adj =
+    std::vector< std::vector<int> > adj2 =
     {
-        {2, 3, 4, 5, 6},
-        {3, 6, 7},
-        {4, 7},
-        {5, 7},
-        {7},
-        {7},
+        {2, 3, 10}, //1
+        {3, 6, 8},  //2
+        {4, 10},    //3
+        {5, 6, 10}, //4
+        {6, 9},     //5
+        {7, 9},     //6
+        {8, 9},     //7
+        {9},        //8
+        {10},       //9
     };
         
-    PQTree tree(adj[0]);
+    PQTree tree2(adj2[0], 1);
         
-    for(size_t i=1; i<adj.size(); i++)
+    for(size_t i=1; i<adj2.size(); i++)
     {
-        std::vector<int> v = adj[i];
-        if(!tree.reduce_and_replace(curr, v))
+        int curr = (int)(i+1);
+        std::vector<int> v = adj2[i];
+        std::list<int> srcs = tree2.reduce_and_replace(curr, v); //this is the lists we will use to produce the embedding
+        
+        if(srcs.empty())
         {
             fprintf(stderr, "error in building the and reducing the tree\n");
             return false;
         }
     }
     return true;
-
+        
 ####Example: Testing Consecutive ones 
 
     std::vector< std::vector<int> > mat =
     {
-        {1, 2, 5}, //values that are one in our matrix
-        {3, 4, 5},
-        {1, 5},
+        {2, 3, 4}, //values that are one in our matrix
+        {1, 2, 3},
+        {4, 5},
+        {2, 3},
         {3, 4},
-        {2, 3}
+        {1},
+        {5}
     };
-    PQTree tree("{1, 2, 3, 4, 5}"); //create a tree with the base set
+    PQTree tree("{1, 2, 3, 4, 5}");
         
-    for(size_t i=0; i<mat.size(); ++i) //apply the consecutive contraints in our matrix
+    for(size_t i=0; i<mat.size(); ++i)
     {
         if(!tree.set_consecutive(mat[i]))
         {
@@ -95,6 +107,13 @@ PQTRee Expressions:
         }
     }
     return true;
+
+##File structure and class dependency
+![Alt text](dependencies.jpg "class dependency")
+
+**Figure 2. Parent Node class of Leaf and PQnode is abstract, a namespace custom is declared within the PQnode file which contains mainly testing and utility functions or custom string comparision functions. The testing file PQTree tests is dependant on the externally linked library CppUnit ( http://cppunit.sourceforge.net/doc/lastest/index.html )**
+
+To use the PQTree implementation you only need to #include the PQTree.h header file
 
 ##References:
 
