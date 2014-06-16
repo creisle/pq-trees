@@ -460,58 +460,6 @@ bool PQTree::equivalent(PQTree &other)
     return custom::compare(print_expression(), other.print_expression());
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * function: compare(std::string s1, std::string s2)
- * purpose: compares two strings for equality ignoring spaces (' ')
- * returns false if they are not equal, true if they are
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool custom::compare(std::string s1, std::string s2)
-{
-    auto a = s1.begin();
-    auto b = s2.begin();
-    while(a!=s1.end())
-    {
-        if((*a)!=' ') //ignore whitespace in s1
-        {
-            while(b!=s2.end())
-            {
-                if((*b)!=' ') //ignore whitespace in s2
-                {
-                    if((*b)==(*a))
-                    {
-                        ++b;
-                        break;
-                    }else
-                    {
-                        return false;
-                    }
-                }
-                ++b;
-            }
-        }
-        ++a;
-    }
-    
-    return true;
-}
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * function: contains(std::vector<int> vec, int v)
- * input: a vector of int values and an int
- * purpose: checks if the int v is a member of the vector
- * returns false if the vector does not have the value specified, true otherwise
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool custom::contains(std::vector<int> vec, int v)
-{
-    for(size_t i=0; i<vec.size(); ++i)
-    {
-        if(vec[i]==v)
-        {
-            return true;
-        }
-    }
-    return false;
-}
 
 void PQTree::print_leaflist(bool mark)
 {

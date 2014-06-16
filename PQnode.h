@@ -80,6 +80,8 @@ namespace custom
 {
     void print(std::list<int>);
     void print(std::vector<int>);
-}
+    bool compare(std::string s1, std::string s2);
+    bool contains(std::vector<int> vec, int v);
+};
 
 #endif

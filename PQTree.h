@@ -64,10 +64,5 @@ class PQTree
         bool equivalent(PQTree&);
 };
 
-namespace custom
-{
-    bool compare(std::string s1, std::string s2);
-    bool contains(std::vector<int> vec, int v);
-};
 
 #endif
