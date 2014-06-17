@@ -59,7 +59,7 @@ class PQnode: public Node
         //to do with the tree
         bool mark();
         void unmark();
-        std::list<int> condense_and_replace(Node*);
+        bool condense_and_replace(Node*, std::list<int>&);
         bool link_child(Node*, direction_type dir = right); //DANGEROUS!
         void update_depth();
         

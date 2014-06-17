@@ -956,14 +956,13 @@ void PQnode::set_type(nodetype t)
  *      with the input node
  * return: false: if an error occurs or the condesation is impossible; true if success
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-std::list<int> PQnode::condense_and_replace(Node *child)
+bool PQnode::condense_and_replace(Node *child, std::list<int>& source_list)
 {
     if(follow){ printf("PQnode::condense_and_replace(Node *child)\n"); }
-    std::list<int> source_list;
     if(child==NULL)
     {
         fprintf(stderr, "ERROR condense_and_replace: cannot replace with a null\n");
-        return source_list;
+        return false;
     }
     std::list<Node*>::iterator it=children.begin();
     while(it!=children.end())
@@ -978,7 +977,7 @@ std::list<int> PQnode::condense_and_replace(Node *child)
             {
                 fprintf(stderr, "ERROR: condense_leaves() - this node has full children that are not leaves\n");
                 source_list.clear();
-                return source_list;
+                return false;
             }
         }
         ++it;
@@ -998,7 +997,7 @@ std::list<int> PQnode::condense_and_replace(Node *child)
             {
                 fprintf(stderr, "ERROR: condense_leaves() - this node has full children that are not leaves\n");
                 source_list.clear();
-                return source_list;
+                return false;
             }
         }
         else
@@ -1011,7 +1010,7 @@ std::list<int> PQnode::condense_and_replace(Node *child)
     child->set_parent(this);
     child->update_depth();
     
-    return source_list;
+    return true;
 }
 
 void custom::print(std::list<int> target)

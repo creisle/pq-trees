@@ -59,17 +59,14 @@ void PQTree::print()
     }
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * function: reduce(std::vector<int> values)
- * input: value which we wish to be consecutive and an input vector of ints representing
- *      the leaves of the new universal tree
- * purpose: performs reductions on the tree based on the input vector. after reduction
- *      replaces the full leaves with the new universal tree that was built from the
- *      input vector
- * return: false is an error occurs or the tree is irreducible, true otherwise
- * note: use this for planarity testing
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-std::list<int> PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
+
+bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
+{
+    std::list<int> sources;
+    return reduce_and_replace(v, tree_in, sources);
+}
+
+bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in, std::list<int> &sources)
 {
     if(follow){ printf("PQTree::reduce_and_replace(int value, std::vector<int> tree_in)\n"); }
     
@@ -80,8 +77,7 @@ std::list<int> PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
     PQnode* subroot = reduce(values); //pertinent subroot
     if(subroot==NULL){
         fprintf(stderr, "%s; could not find the appropriate subroot\n", print_expression().c_str());
-        std::list<int> srcs;
-        return srcs;
+        return false;
     }
     
     Node *child;
@@ -93,11 +89,13 @@ std::list<int> PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
         child = new PQnode(tree_in, leaflist, v);
     }
     
-    std::list<int> srcs = replace_full_with(child);
-    if(srcs.empty()){ return srcs; }
+    if( replace_full_with(child, sources) )
+    {
+        return false;
+    }
     subroot->unmark();
     
-    return srcs;
+    return true;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -158,13 +156,12 @@ bool PQTree::set_consecutive(std::vector<int> values)
  *      while conserving the position
  * return: false is an error occurs, true otherwise
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-std::list<int> PQTree::replace_full_with(Node *child)
+bool PQTree::replace_full_with(Node *child, std::list<int> &sources)
 {
     if(follow){ printf("PQTree::replace_full_with(Node *child)\n"); }
-    std::list<int> srcs;
     
     Node* parent = NULL;
-    if(child==NULL){ return srcs; }
+    if(child==NULL){ return false; }
     std::list<Leaf*> fulls = get_pertinent();
     
     for(std::list<Leaf*>::iterator it=fulls.begin(); it!=fulls.end(); ++it)
@@ -174,7 +171,7 @@ std::list<int> PQTree::replace_full_with(Node *child)
             if((*it)->get_parent()!=parent)
             {
                 fprintf(stderr, "%s, not all full nodes have the same parent\n", print_expression().c_str());
-                return srcs;
+                return false;
             }
         }else
         {
@@ -184,19 +181,17 @@ std::list<int> PQTree::replace_full_with(Node *child)
     
     if(PQnode* temp = dynamic_cast<PQnode*>(parent))
     {
-        srcs.merge(temp->condense_and_replace(child));
-        if(srcs.empty())
+        if(!temp->condense_and_replace(child, sources))
         {
             fprintf(stderr, "condense failed\n");
-            return srcs;
+            return false;
         }
         if(temp->count_children()<3)
         {
             temp->set_type(pnode);
         }
     }
-    //std::cout << "AFTER condesation: " << print_expression() << "\n";
-    return srcs;
+    return true;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

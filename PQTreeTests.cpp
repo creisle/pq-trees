@@ -28,9 +28,31 @@ class PQTreeTests : public CppUnit::TestFixture
 
 public:
     
+    //assumes the input adjacency matrix starts numbering vertices at 1
+    bool testPlanar(std::vector< std::vector<int> > adj, PQTree **tp)
+    {
+        PQTree *tree = new PQTree(adj[0], 1);
+        
+        for(size_t i=1; i<adj.size(); i++)
+        {
+            int curr = (int)(i+1);
+            std::vector<int> v = adj[i];
+            bool result = tree->reduce_and_replace(curr, v); 
+            if(result)
+            {
+                fprintf(stderr, "error in building the and reducing the tree\n");
+                *tp = NULL;
+                return false;
+            }
+        }
+        *tp = tree;
+        return true;
+    }
+    
     void testPlanar()
     {
         //adjacency matrix of an st-numbered input graph
+        PQTree *tree = NULL;
         std::vector< std::vector<int> > adj =
         {
             {2, 3, 4, 5, 6},
@@ -42,26 +64,15 @@ public:
             {0} // 0 is not actually a node. but just so we can check the final reduction
         };
         
-        PQTree tree(adj[0], 1);
-        //std::cout<< tree.print_expression(option_src) <<"\n";
         
-        for(size_t i=1; i<adj.size(); i++)
-        {
-            int curr = (int)(i+1);
-            std::vector<int> v = adj[i];
-            std::list<int> srcs = tree.reduce_and_replace(curr, v); //this is the lists we will use to produce the embedding
-            if(srcs.empty())
-            {
-                fprintf(stderr, "error in building the and reducing the tree\n");
-                exit(1);
-            }
-            //std::cout<< tree.print_expression(option_src) +"\n";
-            //printf("the list at %d is ", curr);
-            //custom::print_list(srcs);
-        }
-        std::string expected = "{ 0 }";
-        std::string message = "expected { 0 } but found "+tree.print_expression()+"\n";
-        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expected, tree.print_expression()));
+        bool result = testPlanar(adj, &tree);
+        
+        std::string exp = "{ 0 }";
+        CPPUNIT_ASSERT(result);
+        CPPUNIT_ASSERT_MESSAGE("Expected: "+exp+"\nFound: "+tree->print_expression()+"\n", custom::compare(exp, tree->print_expression()));
+        
+        delete tree;
+        tree = NULL;
         
         std::vector< std::vector<int> > adj2 =
         {
@@ -75,24 +86,13 @@ public:
             {9},        //8
             {10},       //9
         };
+        result = testPlanar(adj2, &tree);
         
-        PQTree tree2(adj2[0], 1);
-        
-        for(size_t i=1; i<adj2.size(); i++)
-        {
-            int curr = (int)(i+1);
-            std::vector<int> v = adj2[i];
-            std::list<int> srcs = tree2.reduce_and_replace(curr, v); //this is the lists we will use to produce the embedding
-            if(srcs.empty())
-            {
-                fprintf(stderr, "error in building the and reducing the tree\n");
-                break;
-            }
-        }
-        
-        expected = "{ 10  [ 10  10  10 ] }";
-        message = "expected { 10  [ 10  10  10 ] } but found "+tree.print_expression()+"\n";
-        CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expected, tree2.print_expression()));
+        exp = "{ 10  [ 10  10  10 ] }";
+        CPPUNIT_ASSERT(result);
+        CPPUNIT_ASSERT_MESSAGE("Expected: "+exp+"\nFound: "+tree->print_expression()+"\n", custom::compare(exp, tree->print_expression()));
+        delete tree;
+        tree = NULL;
     }
     
     void testConsectuive() //purpose: tests a consectutive ones matrix example
@@ -112,9 +112,6 @@ public:
         
         for(size_t i=0; i<mat.size(); ++i)
         {
-            //std::cout << "\ncurrent tree: " << tree.print_expression() << " adding ";
-            //custom::print(mat[i]);
-            //std::cout << " contraint\n";
             if(!tree.set_consecutive(mat[i]))
             {
                 pass = false; break;
