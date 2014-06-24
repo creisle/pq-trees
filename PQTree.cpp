@@ -88,6 +88,7 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in, std::list<int> 
     {
         child = new PQnode(tree_in, leaflist, v);
     }
+    //subroot->unmark();
     
     if( replace_full_with(child, sources) )
     {
@@ -159,37 +160,22 @@ bool PQTree::set_consecutive(std::vector<int> values)
 bool PQTree::replace_full_with(Node *child, std::list<int> &sources)
 {
     if(follow){ printf("PQTree::replace_full_with(Node *child)\n"); }
+    //std::cout << print_expression(option_marking) << "\n";
     
-    Node* parent = NULL;
     if(child==NULL){ return false; }
-    std::list<Leaf*> fulls = get_pertinent();
+
+    PQnode* parent = find_full_subroot();
     
-    for(std::list<Leaf*>::iterator it=fulls.begin(); it!=fulls.end(); ++it)
+    if(parent==NULL){ return false; }
+    
+    if(!parent->condense_and_replace(child, sources))
     {
-        if(parent)
-        {
-            if((*it)->get_parent()!=parent)
-            {
-                fprintf(stderr, "%s, not all full nodes have the same parent\n", print_expression().c_str());
-                return false;
-            }
-        }else
-        {
-            parent = (*it)->get_parent();
-        }
+        fprintf(stderr, "condense failed\n");
+        return false;
     }
-    
-    if(PQnode* temp = dynamic_cast<PQnode*>(parent))
+    if(parent->count_children()<3)
     {
-        if(!temp->condense_and_replace(child, sources))
-        {
-            fprintf(stderr, "condense failed\n");
-            return false;
-        }
-        if(temp->count_children()<3)
-        {
-            temp->set_type(pnode);
-        }
+        parent->set_type(pnode);
     }
     return true;
 }
@@ -246,6 +232,46 @@ PQnode* PQTree::mark(std::vector<int> v)
     }
     return NULL;
     
+}
+
+PQnode* PQTree::find_full_subroot()
+{
+    if(follow){ printf("PQTree::find_full_subroot)\n"); }
+    
+    std::list<Leaf*> fulls = get_pertinent(); //get the full leaves
+    std::list<PQnode*> parents; 
+    
+    for(std::list<Leaf*>::iterator k = fulls.begin(); k!=fulls.end(); ++k)
+    {
+        PQnode *p = dynamic_cast<PQnode*>((*k)->get_parent());
+        if(p==NULL) //this is the parent we want to add to the list of potential partials
+        {
+            return NULL;
+        }
+        //add it into the partials list by inserting it at the correct position based on decreasing depth
+        add_unique_by_depth(p, parents);
+    }
+    fulls.clear();
+    
+    //at this point we have a list of potential partials sorted by depth with no duplicates
+    //now we need to mark these nodes.... and then their parents until there is only one node left in the partials list
+    
+    while(parents.size()>1)
+    {
+        PQnode *curr = parents.front();//always deal with the front element first
+        if(curr->get_mark()!=full) 
+        {
+            return NULL;
+        }
+        PQnode *p = dynamic_cast<PQnode*>(curr->get_parent()); 
+        parents.pop_front(); //remove the curr node and destroy the reference
+        add_unique_by_depth(p, parents);
+    }
+    if(!parents.empty())
+    {
+        return parents.front();
+    }
+    return NULL;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

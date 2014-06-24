@@ -39,6 +39,7 @@ class PQTree
         bool replace_full_with(Node*, std::list<int>&);
         PQnode* reduce(std::vector<int>);
         std::list<Leaf*> get_pertinent();
+        PQnode* find_full_subroot();
         
     public:
         
