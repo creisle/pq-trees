@@ -6,6 +6,7 @@
 //warning to ignore
 #pragma GCC diagnostic ignored "-Wpadded"
 #pragma GCC diagnostic ignored "-Wc++11-extensions"
+#pragma GCC diagnostic ignored "-Wc++98-compat"
 
 //dependencies
 #include "Node.h"
@@ -24,6 +25,7 @@ class PQnode: public Node
 {
     private:
         std::list<Node*> children; //empty list of children
+        bool flipped;
         
         //functions for tree reduction
         bool reduce_proot(); //for the subroot if it is a pnode
@@ -63,7 +65,6 @@ class PQnode: public Node
         bool link_child(Node*, direction_type dir = right); //DANGEROUS!
         void update_depth();
         
-        
         //function for tree reduction
         bool reduce();
         
@@ -74,6 +75,7 @@ class PQnode: public Node
         //mainly for testing
         std::string print_expression(print_option m = option_none);
         void print();
+        std::string convert_to_gml(int&);
 };
 
 namespace custom

@@ -5,6 +5,7 @@
 //warning to ignore
 #pragma GCC diagnostic ignored "-Wpadded"
 #pragma GCC diagnostic ignored "-Wc++11-extensions"
+#pragma GCC diagnostic ignored "-Wc++98-compat"
 
 //dependencies
 #include <iostream>
@@ -34,6 +35,7 @@ class Node
         virtual void update_depth() = 0;
         virtual bool less_than( Node& ) = 0;
         virtual void sort() = 0;
+        virtual std::string convert_to_gml(int &) = 0;
         
         //getters
         Node* get_parent();
@@ -42,7 +44,7 @@ class Node
         marking get_mark() const;
         
         //setters
-        virtual void unmark();
+        virtual void unmark() = 0;
         void set_parent(Node*);
         
 };

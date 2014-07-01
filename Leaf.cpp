@@ -127,6 +127,15 @@ bool contains(std::vector<int> vec, int v)
     return false;
 }
 
+std::string Leaf::convert_to_gml(int &id)
+{
+    std::string result = Node::convert_to_gml(id);
+    result += "label \"";
+    result += std::to_string(value);
+    result += "\"\n]\n";
+    return result;
+}
+
     
 
 

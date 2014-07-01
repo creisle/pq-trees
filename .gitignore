@@ -17,3 +17,5 @@ random.txt
 *.exe
 
 practice.h.gch
+
+*.a

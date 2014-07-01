@@ -47,7 +47,6 @@ Node* Node::get_parent(){ return parent; }
 int Node::get_depth() const{ return depth; }
 nodetype Node::get_type() const{ return type; }
 marking Node::get_mark() const{ return node_mark; }
-void Node::unmark(){ node_mark = empty; }
 void Node::set_parent(Node *p){ parent = p; }
 
 //comparison to sort lists of marked nodes by marking so that they follow the form e...p...f
@@ -76,4 +75,13 @@ bool compare_marking(Node *first, Node *second)
     }
 }
 
+std::string Node::convert_to_gml(int &id)
+{
+    ++id;
+    std::string result = "node [\nid ";
+    result += std::to_string(id);
+    result += "\ngraphics [\nw 20.0\n";
+    result += "h 20.0\n]\n";
+    return result;
+}
 

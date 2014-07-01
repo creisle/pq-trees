@@ -38,10 +38,9 @@ public:
             int curr = (int)(i+1);
             std::vector<int> v = adj[i];
             bool result = tree->reduce_and_replace(curr, v); 
-            if(result)
+            if(!result)
             {
                 fprintf(stderr, "error in building the and reducing the tree\n");
-                *tp = NULL;
                 return false;
             }
         }
@@ -68,8 +67,9 @@ public:
         bool result = testPlanar(adj, &tree);
         
         std::string exp = "{ 0 }";
-        CPPUNIT_ASSERT(result);
+        
         CPPUNIT_ASSERT_MESSAGE("Expected: "+exp+"\nFound: "+tree->print_expression()+"\n", custom::compare(exp, tree->print_expression()));
+        CPPUNIT_ASSERT(result);
         
         delete tree;
         tree = NULL;
@@ -304,6 +304,9 @@ int main( int argc, char **argv)
     runner.addTest( PQnodeTests::suite() );
     runner.addTest( LeafTests::suite() );
     runner.run();
+    
+    //PQTree tree("{ 3 4 5 [ 3 4 5 [ 3 2 1 7 ]] { 8 9 10 }}");
+    //std::cout << "the potentional gml file is \n\n" << tree.convert_to_gml() << std::endl;
     
     return 0;
 }

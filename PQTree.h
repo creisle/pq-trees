@@ -24,6 +24,7 @@ class Node;
 class PQTree
 {
     private:
+        int stage; //use in keeping track of printouts
         PQnode *root; //pointer to the root of the PQ tree
         std::list<Leaf*> leaflist; //don't need to add to the destructor since this is never "newed"
         
@@ -53,6 +54,7 @@ class PQTree
         void print(); //iterates recusively through the tree and prints out leaves and nodes
         std::string print_expression(print_option p = option_none); //prints an expression respresenting the tree structure and contents
         void print_leaflist(bool detail = false); //prints the contents of the leaflist
+        std::string convert_to_gml();
         
         //reduction opertaions
         bool reduce_and_replace(int, std::vector<int>); //planarity testing
@@ -64,6 +66,8 @@ class PQTree
         
         //comparing
         bool equivalent(PQTree&);
+        
+        
 };
 
 

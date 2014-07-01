@@ -10,16 +10,30 @@
  */
 
 #include "PQTree.h"
+
+//warning to ignore
+#pragma GCC diagnostic ignored "-Wpadded"
+#pragma GCC diagnostic ignored "-Wc++11-extensions"
+
 static bool follow = false; //use this to find bugs. prints out function names when a function is executed
+static bool debug = false;
+
+std::string string_marking[] = {"empty", "partial", "full"};
+
+using std::cout;
+using std::endl;
+using std::cerr;
 
 PQTree::PQTree()
 {
     root = NULL;
+    stage = 0;
 }
 
 PQTree::PQTree(std::vector<int> leaves, int src/*-1*/)
 {
     root = new PQnode(leaves, leaflist, src);
+    stage = 0;
 }
 
 PQTree::PQTree(std::string const expr)
@@ -31,9 +45,10 @@ PQTree::PQTree(std::string const expr)
     }else
     {
         root = NULL;
-        fprintf(stderr, "cannot initialize a pq tree with an invalid expression\n");
+        cerr << "cannot initialize a pq tree with an invalid expression" << endl;
         exit(1);
     }
+    stage = 0;
 }
 
 PQTree::~PQTree()
@@ -68,15 +83,23 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in)
 
 bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in, std::list<int> &sources)
 {
-    if(follow){ printf("PQTree::reduce_and_replace(int value, std::vector<int> tree_in)\n"); }
-    
+    if(follow||debug){ cerr << "PQTree::reduce_and_replace(int value, std::vector<int> tree_in)" << endl; }
     //put the value inside a vector
     std::vector<int> values;
     values.push_back(v);
     
     PQnode* subroot = reduce(values); //pertinent subroot
+    if(debug&&subroot!=NULL)
+    {
+        cerr << "current tree: " << print_expression(option_marking) << endl;
+        cerr << "pertinent subroot: " << subroot->print_expression(option_marking) << endl;
+    }
     if(subroot==NULL){
-        fprintf(stderr, "%s; could not find the appropriate subroot\n", print_expression().c_str());
+        if(follow||debug)
+        {
+            cerr << print_expression() << "; could not find the appropriate subroot. reduce failed" << endl;
+        }
+        //
         return false;
     }
     
@@ -90,7 +113,7 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in, std::list<int> 
     }
     //subroot->unmark();
     
-    if( replace_full_with(child, sources) )
+    if( !replace_full_with(child, sources) )
     {
         return false;
     }
@@ -110,11 +133,17 @@ PQnode* PQTree::reduce(std::vector<int> values)
 {
     if(follow){ printf("PQTree::reduce(int value)\n"); }
     
+    
     PQnode* subroot = mark(values); //pertinent subroot
-    //std::cout << "after marking: " << print_expression(option_marking) <<"\n";
-    if(follow){ printf("PQTree::reduce(int value). marked as %s\n", print_expression(option_marking).c_str()); }
+    
+    if(follow){ cerr << "PQTree::reduce(int value). marked as " << print_expression(option_marking) << endl; }
     if(subroot!=NULL)
     {
+        
+        if(debug)
+        {
+            cerr << "pertinent subroot before reduce: " << subroot->print_expression(option_marking) << endl;
+        }
         if(subroot->get_mark()==full)
         {
             return subroot;
@@ -126,7 +155,10 @@ PQnode* PQTree::reduce(std::vector<int> values)
     }
     else
     {
-        fprintf(stderr, "pertinent subroot not found, could be invalid leaf values\n");
+        if(debug)
+        {
+            cerr << "pertinent subroot not found, could be invalid leaf values" << endl;
+        }
     }
     return NULL;
 }
@@ -160,13 +192,20 @@ bool PQTree::set_consecutive(std::vector<int> values)
 bool PQTree::replace_full_with(Node *child, std::list<int> &sources)
 {
     if(follow){ printf("PQTree::replace_full_with(Node *child)\n"); }
-    //std::cout << print_expression(option_marking) << "\n";
     
     if(child==NULL){ return false; }
 
     PQnode* parent = find_full_subroot();
     
-    if(parent==NULL){ return false; }
+    if(debug)
+    {
+        cerr << "\"full\" subroot: " << parent->print_expression() << endl;
+    }
+    
+    if(parent==NULL){
+        fprintf(stderr, "could not find the full subroot to replace\n");
+        return false;
+    }
     
     if(!parent->condense_and_replace(child, sources))
     {
@@ -189,7 +228,7 @@ bool PQTree::replace_full_with(Node *child, std::list<int> &sources)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 PQnode* PQTree::mark(std::vector<int> v)
 {   
-    if(follow){ printf("PQTree::mark(int v)\n"); }
+    if(follow){ printf("PQTree::mark(vector<int> v)\n"); }
     
     std::list<Leaf*> fulls = mark_pertinent(v); //mark the full leaves based on the input values
     std::list<PQnode*> partials; 
@@ -213,7 +252,6 @@ PQnode* PQTree::mark(std::vector<int> v)
     while(partials.size()>1)
     {
         PQnode *curr = partials.front();//always deal with the front element first
-        //std::cout << "currently looking at the node: " << curr->print_expression(option_depth) << "\n";
         if(!(curr->mark())) //mark the node
         {
             return NULL;
@@ -237,17 +275,15 @@ PQnode* PQTree::mark(std::vector<int> v)
 PQnode* PQTree::find_full_subroot()
 {
     if(follow){ printf("PQTree::find_full_subroot)\n"); }
-    
+    if(debug){ cerr << "find_full_subroot(): current tree: " << print_expression(option_marking) << endl; }
     std::list<Leaf*> fulls = get_pertinent(); //get the full leaves
+    
+    
     std::list<PQnode*> parents; 
     
-    for(std::list<Leaf*>::iterator k = fulls.begin(); k!=fulls.end(); ++k)
+    for(auto k = fulls.begin(); k!=fulls.end(); ++k)
     {
         PQnode *p = dynamic_cast<PQnode*>((*k)->get_parent());
-        if(p==NULL) //this is the parent we want to add to the list of potential partials
-        {
-            return NULL;
-        }
         //add it into the partials list by inserting it at the correct position based on decreasing depth
         add_unique_by_depth(p, parents);
     }
@@ -255,14 +291,9 @@ PQnode* PQTree::find_full_subroot()
     
     //at this point we have a list of potential partials sorted by depth with no duplicates
     //now we need to mark these nodes.... and then their parents until there is only one node left in the partials list
-    
     while(parents.size()>1)
     {
         PQnode *curr = parents.front();//always deal with the front element first
-        if(curr->get_mark()!=full) 
-        {
-            return NULL;
-        }
         PQnode *p = dynamic_cast<PQnode*>(curr->get_parent()); 
         parents.pop_front(); //remove the curr node and destroy the reference
         add_unique_by_depth(p, parents);
@@ -394,13 +425,17 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i)
                 return NULL;
         }
     }
-    if(isqnode&&rt->count_children()>2)
+    if(rt!=NULL)
     {
-        rt->set_type(qnode);
-    }else if(rt->count_children()==1)
-    {
-        return lf;
+        if(isqnode&&rt->count_children()>2)
+        {
+            rt->set_type(qnode);
+        }else if(rt->count_children()==1)
+        {
+            return lf;
+        }
     }
+    
     return rt;
 }
 
@@ -492,12 +527,27 @@ void PQTree::print_leaflist(bool mark)
         }
         else
         {
-            printf("%d ", (*it)->get_value());
+            if(mark)
+            {
+                cout << string_marking[(*it)->get_mark()] << ":" << (*it)->get_value() << endl;
+            }
+            else
+            {
+                printf("%d ", (*it)->get_value());
+            }
         }
     }
     printf("\n");
 }
 
+std::string PQTree::convert_to_gml()
+{
+    int id = 0;
+    std::string result = "graph [\n";
+    result += root->convert_to_gml(id);
+    result += "]\n";
+    return result;
+}
 
 
 

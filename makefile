@@ -3,13 +3,14 @@
 
 SRCS = Leaf.cpp Node.cpp PQnode.cpp PQTree.cpp 
 TSRC = PQTreeTests.cpp
+XSRC = Test.cpp
 HDRS = Leaf.h Node.h PQnode.h PQTree.h
 PROJ = pract
 
 CXX = clang++
 OBJS = $(SRCS:.cpp=.o)
 APP = $(PROJ).exe
-CFLAGS = -g -Wall -std=c++11 -stdlib=libc++ -I/usr/local/include
+CFLAGS = -g -std=c++11 -stdlib=libc++ -I/usr/local/include
 LDFLAGS = -L/usr/local/lib
 LIBS = -lcppunit -ldl
 
@@ -17,17 +18,25 @@ all: $(APP)
 
 #compile into an exe and add the test class here
 $(APP): $(OBJS) $(TSRC)
-	$(CXX) $(CFLAGS) $(TSRC) $(LDFLAGS) $(OBJS) -o $(APP) $(LIBS)
+	$(CXX) -Wall $(CFLAGS) $(TSRC) $(LDFLAGS) $(OBJS) -o $(APP) $(LIBS)
 
 #compile the custom files but not the test class since it needs these oject files
 %.o: %.cpp $(HDRS)
-	$(CXX) -c  $(CFLAGS) $< -o $@
+	$(CXX) -c  $(CFLAGS) -Wall $< -o $@
+
+#make a shared library
+lib: $(OBJS)
+	ar -cvq libPQTree.a $(OBJS)
+#	$(CXX) -dynamiclib -o libPQTree.dylib $(SRCS) 
 
 #clean up object and exe files
 clean:
-	rm -f *.o $(APP)
+	rm -f *.o $(APP) *.so *.dylib *.a *.plist
 
 #run the program....fairly self explanatory
 run:
 	./$(APP)
+	
+basic: $(SRCS)
+	$(CXX) $(CFLAGS) --analyze -Weverything $(SRCS) $(XSRC) 
 

@@ -5,6 +5,7 @@
 //warning to ignore
 #pragma GCC diagnostic ignored "-Wpadded"
 #pragma GCC diagnostic ignored "-Wc++11-extensions"
+#pragma GCC diagnostic ignored "-Wc++98-compat"
 
 
 //dependencies
@@ -35,6 +36,7 @@ class Leaf: public Node
         //testing functions
         void print();
         std::string print_expression(print_option m = option_none);
+        std::string convert_to_gml(int&);
         
         //update and setters
         void mark();
