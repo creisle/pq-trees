@@ -115,18 +115,6 @@ void Leaf::update_depth()
     }
 }
 
-bool contains(std::vector<int> vec, int v)
-{
-    for(size_t i=0; i<vec.size(); ++i)
-    {
-        if(v==vec[i])
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 std::string Leaf::convert_to_gml(int &id)
 {
     std::string result = Node::convert_to_gml(id);

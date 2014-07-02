@@ -12,6 +12,7 @@ Node::Node() //default constructor
     parent = NULL;
     depth = 0;
     node_mark = empty;
+    type = pnode;
 }
 
 //this procedure is just for testing purposes
@@ -73,6 +74,24 @@ bool compare_marking(Node *first, Node *second)
     { 
         return false;
     }
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * function: contains(std::vector<int> vec, int v)
+ * input: a vector of int values and an int
+ * purpose: checks if the int v is a member of the vector
+ * returns false if the vector does not have the value specified, true otherwise
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+bool custom::contains(std::vector<int> vec, int v)
+{
+    for(size_t i=0; i<vec.size(); ++i)
+    {
+        if(vec[i]==v)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 std::string Node::convert_to_gml(int &id)

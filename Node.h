@@ -6,6 +6,7 @@
 #pragma GCC diagnostic ignored "-Wpadded"
 #pragma GCC diagnostic ignored "-Wc++11-extensions"
 #pragma GCC diagnostic ignored "-Wc++98-compat"
+#pragma GCC diagnostic ignored "-Wc++98-compat-pedantic"
 
 //dependencies
 #include <iostream>
@@ -50,5 +51,10 @@ class Node
 };
 
 bool compare_marking(Node*, Node*);
+
+namespace custom
+{
+    bool contains(std::vector<int> vec, int v);
+};
 
 #endif

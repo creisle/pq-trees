@@ -29,7 +29,7 @@ class PQTree
         std::list<Leaf*> leaflist; //don't need to add to the destructor since this is never "newed"
         
         //testing
-        Node* build_from_expr(std::string const expr, size_t &i);
+        Node* build_from_expr(std::string &expr, size_t &i);
         
         //marking
         PQnode* mark(std::vector<int> values);
@@ -46,7 +46,7 @@ class PQTree
         
         //constructors and destructor
         PQTree();
-        PQTree(std::string const);
+        PQTree(std::string);
         PQTree(std::vector<int>, int src=-1);
         virtual ~PQTree();
         

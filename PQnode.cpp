@@ -602,11 +602,11 @@ bool PQnode::reduce_qroot()
 {
     if(follow){ cerr << "PQnode::reduce_qroot()" << endl; }
     
-    sort_children();
+    sort_children(); //will have attempted to flip the node so that e....p...f...p..e
     
-    std::list<Node*> partials_list;
-    std::list<Node*>::iterator it=children.begin();
-    skip_marks(it, empty);
+    auto it=children.begin();
+    
+    skip_marks(it, empty); //ignore empty children
     
     if(!promote_partial_children(it, right)) //first potential partial node
     {
@@ -637,11 +637,10 @@ bool PQnode::reduce_qroot()
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, direction_type dir/*right*/)
 {
-    std::list<Node*> partials_list;
     if(it!=children.end())
     {
         PQnode *curr = dynamic_cast<PQnode*>(*it);
-        if(curr!=NULL&&curr->get_mark()==partial)
+        if(curr!=NULL && curr->get_mark()==partial)
         {
             it = children.erase(it);
             
@@ -661,10 +660,6 @@ bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, direction_
             }
             
             delete curr;
-        }
-        else
-        {
-            ++it;
         }
     }
     return true;
@@ -721,14 +716,11 @@ bool PQnode::preduce(direction_type dir/*right*/)
     std::list<Node*> empty_list;
     std::list<Node*> partials_list;
     std::list<Node*> full_list; //temporary list to store directed node stuff
-    size_t ecount;
-    size_t fcount;
-    size_t pcount;
     
     sort_children();
     
     std::list<Node*>::iterator it=children.begin();
-    ecount = grab_marks(it, empty, empty_list);
+    grab_marks(it, empty, empty_list);
     
     if(it!=children.end()) //find the partial child
     { 
@@ -753,8 +745,7 @@ bool PQnode::preduce(direction_type dir/*right*/)
         } 
     }
     
-    fcount = grab_marks(it, full, full_list);
-    pcount = partials_list.size();
+    grab_marks(it, full, full_list);
     
     if(it!=children.end())
     {
@@ -818,9 +809,7 @@ bool PQnode::qreduce(direction_type dir/*right*/)
     std::list<Node*> empty_list;
     std::list<Node*> partials_list; 
     std::list<Node*> fulls_list; 
-    size_t ecount = 0;
     size_t pcount = 0;
-    size_t fcount = 0;
     
     if(node_mark!=partial)
     {
@@ -830,9 +819,9 @@ bool PQnode::qreduce(direction_type dir/*right*/)
     sort_children(); //should put them in e... p... f format
     
     auto it=children.begin();
-    ecount = grab_marks(it, empty, empty_list); 
+    grab_marks(it, empty, empty_list); 
     pcount = grab_marks(it, partial, partials_list); 
-    fcount = grab_marks(it, full, fulls_list);
+    grab_marks(it, full, fulls_list);
     
     if(it!=children.end()||pcount>1)
     {
@@ -1139,24 +1128,6 @@ bool custom::compare(std::string s1, std::string s2)
     }
     
     return true;
-}
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * function: contains(std::vector<int> vec, int v)
- * input: a vector of int values and an int
- * purpose: checks if the int v is a member of the vector
- * returns false if the vector does not have the value specified, true otherwise
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-bool custom::contains(std::vector<int> vec, int v)
-{
-    for(size_t i=0; i<vec.size(); ++i)
-    {
-        if(vec[i]==v)
-        {
-            return true;
-        }
-    }
-    return false;
 }
 
 

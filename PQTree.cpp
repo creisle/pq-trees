@@ -18,7 +18,7 @@
 static bool follow = false; //use this to find bugs. prints out function names when a function is executed
 static bool debug = false;
 
-std::string string_marking[] = {"empty", "partial", "full"};
+static std::string string_marking[] = {"empty", "partial", "full"};
 
 using std::cout;
 using std::endl;
@@ -36,7 +36,7 @@ PQTree::PQTree(std::vector<int> leaves, int src/*-1*/)
     stage = 0;
 }
 
-PQTree::PQTree(std::string const expr)
+PQTree::PQTree(std::string expr)
 {
     size_t i=0;
     if(PQnode *tmp = dynamic_cast<PQnode*>(build_from_expr(expr, i)))
@@ -256,16 +256,19 @@ PQnode* PQTree::mark(std::vector<int> v)
         {
             return NULL;
         }
-        PQnode *p = (PQnode*)curr->get_parent(); //any parent in the tree will never be a leaf since they cannot have children. therefore this casting is safe
-        partials.pop_front(); //remove the curr node and destroy the reference
-        add_unique_by_depth(p, partials);
-    }
-    if(!partials.empty())
-    {
-        if( !(partials.front()->mark()) )
+        if(PQnode *p = dynamic_cast<PQnode*>(curr->get_parent()))
         {
-            return NULL;
+            partials.pop_front(); //remove the curr node and destroy the reference
+            add_unique_by_depth(p, partials);
         }
+        else //could be that the parent was null in which case just remove
+        {
+            partials.pop_front();
+        }
+        
+    }
+    if(!partials.empty() && (partials.front()->mark()) )
+    {
         return partials.front();
     }
     return NULL;
@@ -367,7 +370,7 @@ std::string PQTree::print_expression(print_option p/*option_none*/)
  * returns: a Node pointer to the prospective "root". returns NULL if the expression is invalid
  * notes: this function is recursive
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-Node* PQTree::build_from_expr(std::string const expr, size_t &i)
+Node* PQTree::build_from_expr(std::string &expr, size_t &i)
 {
     if(follow){ printf("PQTree::build_from_expr(std::string const expr, int &i)\n"); }
     
@@ -413,7 +416,7 @@ Node* PQTree::build_from_expr(std::string const expr, size_t &i)
                 {
                     //get the number terminated by a comma
                     std::string num = "";
-                    while(expr[i]!=' '&&expr[i]!=']'&&expr[i]!='}'&&i<expr.length())
+                    while(i<expr.length()&&expr[i]!=' '&&expr[i]!=']'&&expr[i]!='}')
                     {
                         num += expr[i++];
                     }
