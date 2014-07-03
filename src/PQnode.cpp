@@ -13,6 +13,8 @@
 
 static bool follow = false;
 static bool debug = false;
+static bool leaks = true;
+static int builtcount = 0;
 
 using std::cout;
 using std::endl;
@@ -21,6 +23,7 @@ using std::cerr;
 PQnode::PQnode()
     : Node()
 {
+    if(leaks){ ++builtcount; }
     type = pnode;
     flipped = false;
 }
@@ -28,6 +31,7 @@ PQnode::PQnode()
 PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*pnode*/) //src default, nodetype def or spec
     : Node()
 {
+    if(leaks){ ++builtcount; }
     int src = -1;
     
     for(size_t i=0; i<leaves.size(); ++i)
@@ -41,7 +45,8 @@ PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*
 
 PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, int src, nodetype t/*pnode*/) //src spec, nodetype def or spec
     : Node()
-{    
+{
+    if(leaks){ ++builtcount; }
     for(size_t i=0; i<leaves.size(); ++i)
     {
         Leaf *lf = new Leaf(this, leaves[i], leaflist, src);
@@ -52,12 +57,18 @@ PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, int src, nod
 }
 
 PQnode::~PQnode()
-{    
-    for(std::list<Node*>::iterator it=children.begin(); it!=children.end(); ++it)
+{
+    if(leaks){ --builtcount; }
+    if(!children.empty())
     {
-        delete *it;
+        auto it = children.begin();
+        while(it!=children.end())
+        {
+            Node *curr = *it;
+            it = children.erase(it);
+            delete curr;
+        }
     }
-    children.clear();
 }
 
 bool PQnode::less_than(Node& other)
@@ -209,19 +220,21 @@ size_t PQnode::skip_marks(std::list<Node*>::iterator &itr, marking m)
  *      runs through the list from the current position in the child list adding to the input list
  *      until it hits a mark that isn't the specified type. updates the position of the iterator
  *      that is passed in
+ *      
  * return:
  *      number of elements found with that marking
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-size_t PQnode::grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<Node*> &tmp)
+size_t PQnode::grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<Node*> &tmplist)
 {
     size_t count = 0;
     while(itr!=children.end())
     {
-        if((*itr)->get_mark()==m)
+        Node *temp = (*itr);
+        if(temp->get_mark()==m)
         {
-            tmp.push_back((*itr));
+            tmplist.push_back(temp);
             ++count;
-            ++itr;
+            itr = children.erase(itr);
         }
         else //stops when it finds any node that doesn't have the mark we expect
         {
@@ -473,7 +486,8 @@ bool PQnode::reduce_proot()
             {
                 return false;
             }
-            ++it;
+            it = children.erase(it);
+            delete ch;
         } 
     }
     
@@ -491,7 +505,8 @@ bool PQnode::reduce_proot()
             {
                 return false;
             }
-            ++it;
+            it = children.erase(it);
+            delete ch;
         }
     }
     
@@ -555,7 +570,12 @@ bool PQnode::reduce_proot()
         }
         partials_list.clear();
         
-        link_child(group_children(full_list)); //group the full nodes into a qnode with the partials
+        //link_child(group_children(full_list)); //group the full nodes into a qnode with the partials
+        
+        for(it=full_list.begin(); it!=full_list.end(); ++it)
+        {
+            link_child((*it));
+        }
         
         //if there is another partial child, add it here
         for(it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it)
@@ -656,6 +676,7 @@ bool PQnode::promote_partial_children(std::list<Node*>::iterator &it, direction_
                 }
             }else
             {
+                delete curr;
                 return false;
             }
             
@@ -741,7 +762,8 @@ bool PQnode::preduce(direction_type dir/*right*/)
             {
                 return false;
             }
-            ++it;
+            it = children.erase(it);
+            delete ch;
         } 
     }
     
@@ -844,6 +866,8 @@ bool PQnode::qreduce(direction_type dir/*right*/)
             partials_list.push_back(temp);
             temp = ptemp->pop_child();
         }
+        delete ptemp;
+        
     }  
         
     if(dir==right)
@@ -916,6 +940,8 @@ Node* PQnode::group_children(std::list<Node*> &group)
         }
         if(!temp->mark())
         {
+            group.clear();
+            delete temp;
             return NULL;
         }
         result = temp;

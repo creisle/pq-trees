@@ -17,6 +17,8 @@
 
 static bool follow = false; //use this to find bugs. prints out function names when a function is executed
 static bool debug = false;
+static bool leaks = true;
+static int buildcount = 0;
 
 static std::string string_marking[] = {"empty", "partial", "full"};
 
@@ -26,12 +28,14 @@ using std::cerr;
 
 PQTree::PQTree()
 {
+    if(leaks){ cerr << "PQTree++ " << ++buildcount << endl; }
     root = NULL;
     stage = 0;
 }
 
 PQTree::PQTree(std::vector<int> leaves, int src/*-1*/)
 {
+    if(leaks){ cerr << "PQTree++ " << ++buildcount << endl; }
     root = new PQnode(leaves, leaflist, src);
     stage = 0;
 }
@@ -39,6 +43,7 @@ PQTree::PQTree(std::vector<int> leaves, int src/*-1*/)
 PQTree::PQTree(std::string expr)
 {
     size_t i=0;
+    if(leaks){ cerr << "PQTree++ " << ++buildcount << endl; }
     if(PQnode *tmp = dynamic_cast<PQnode*>(build_from_expr(expr, i)))
     {
         root = tmp;
@@ -53,6 +58,7 @@ PQTree::PQTree(std::string expr)
 
 PQTree::~PQTree()
 {
+    if(leaks){ cerr << "PQTree-- " << --buildcount << endl; }
     delete root;
     root = NULL;
 }

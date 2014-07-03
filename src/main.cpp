@@ -108,15 +108,16 @@ public:
             {1},
             {5}
         };
-        PQTree tree("{1, 2, 3, 4, 5}");
+        PQTree *tree = new PQTree("{1, 2, 3, 4, 5}");
         
         for(size_t i=0; i<mat.size(); ++i)
         {
-            if(!tree.set_consecutive(mat[i]))
+            if(!tree->set_consecutive(mat[i]))
             {
                 pass = false; break;
             }
         }
+        delete tree;
         CPPUNIT_ASSERT_MESSAGE( "Consecutive ordering example failed\n ", pass);
     }
     
@@ -131,6 +132,7 @@ public:
         CPPUNIT_ASSERT_MESSAGE( message, custom::compare(expr, tree->print_expression()));
         
         size_t count = tree->get_leaflist_size();
+        delete tree;
         
         CPPUNIT_ASSERT_EQUAL(expr_count, count);
         
@@ -179,6 +181,10 @@ public:
         }
         int count = lfs.size();
         CPPUNIT_ASSERT_EQUAL(count, 5);
+        for(auto it= lfs.begin(); it!=lfs.end(); ++it){
+            delete *it;
+            *it = NULL;
+        }
         lfs.clear();
     }
     

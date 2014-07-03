@@ -5,13 +5,17 @@
 
 #include "Leaf.h"
 
-static bool test_leaks = false;
+static bool leaks = true;
+static int buildcount = 0;
+
+using std::cerr;
+using std::endl;
 
 
 Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist, int src /*-1*/)
     : Node()
 {
-    if(test_leaks){ printf("LEAF ++\n"); }
+    if(leaks){ ++buildcount; }
     parent = p;
     value = v;
     source = src;
@@ -24,7 +28,7 @@ Leaf::Leaf(Node *p, int v, std::list<Leaf*> &leaflist, int src /*-1*/)
 Leaf::Leaf(int v, std::list<Leaf*> &leaflist, int src /*-1*/)
     : Node()
 {
-    if(test_leaks){ printf("LEAF ++\n"); }
+    if(leaks){ ++buildcount; }
     value = v;
     source = src;
     leaflist.push_back(this);
@@ -36,7 +40,7 @@ Leaf::Leaf(int v, std::list<Leaf*> &leaflist, int src /*-1*/)
 Leaf::~Leaf()
 {
     //follow pointer to the leaflist entry to null it's pointer
-    if(test_leaks){  printf("LEAF -- \n"); }
+    if(leaks){ --buildcount; }
     if(leaf_list_ptr!=NULL)
     {
         *leaf_list_ptr = NULL;

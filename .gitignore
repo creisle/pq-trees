@@ -1,23 +1,23 @@
-pq
+*.exe
 
-pract
+practice/
 
-test
+PQTest/
 
-practice
+PQTest/PQTest/PQTest.1
 
-example
+*.plist
 
-*.exe.*
+*.txt
 
-random.txt
+*.cfg
 
 *.o
 
-*.exe
-
-practice.h.gch
-
 *.a
 
-err.txt
+PQTest/PQTest.xcodeproj/project.pbxproj
+
+*.pbxproj
+
+PQTest/PQTest.xcodeproj/project.pbxproj
