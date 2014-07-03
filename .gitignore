@@ -21,3 +21,5 @@ PQTest/PQTest.xcodeproj/project.pbxproj
 *.pbxproj
 
 PQTest/PQTest.xcodeproj/project.pbxproj
+
+debug/

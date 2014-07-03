@@ -179,8 +179,8 @@ public:
         for(int i=0; i<5; i++){
             new Leaf(i, lfs);
         }
-        int count = lfs.size();
-        CPPUNIT_ASSERT_EQUAL(count, 5);
+        size_t count = lfs.size();
+        CPPUNIT_ASSERT_EQUAL(count, (size_t)5);
         for(auto it= lfs.begin(); it!=lfs.end(); ++it){
             delete *it;
             *it = NULL;
