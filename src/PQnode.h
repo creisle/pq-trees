@@ -34,10 +34,10 @@ class PQnode: public Node
         bool preduce(direction_type);
         bool reduce(direction_type); //for descedants of the pertinent subroot
         Node* group_children(std::list<Node*> &);
-        size_t grab_marks(marking, std::list<Node*>&);
+        size_t grab_marks(std::list<Node*>::iterator &, marking, std::list<Node*>&);
         bool promote_partial_children(std::list<Node*>::iterator&, direction_type);
         void pop_children(std::list<Node*> &kids);
-    
+        
         //funcitons for marking
         size_t skip_marks(std::list<Node*>::iterator &, marking);
         
@@ -71,7 +71,6 @@ class PQnode: public Node
         //other
         void set_type(nodetype t);
         void sort();
-        void flip();
         
         //mainly for testing
         std::string print_expression(print_option m = option_none);

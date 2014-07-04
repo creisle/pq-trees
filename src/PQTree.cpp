@@ -16,7 +16,7 @@
 #pragma GCC diagnostic ignored "-Wc++11-extensions"
 
 static bool follow = false; //use this to find bugs. prints out function names when a function is executed
-static bool debug = true;
+static bool debug = false;
 static bool leaks = true;
 static int buildcount = 0;
 
@@ -287,19 +287,14 @@ PQnode* PQTree::find_full_subroot()
     if(debug){ cerr << "find_full_subroot(): current tree: " << print_expression(option_marking) << endl; }
     std::list<Leaf*> fulls = get_pertinent(); //get the full leaves
     
-    if(debug){ cerr << "after getting the pertinent leaves. current tree " << print_expression() << endl; }
     
     std::list<PQnode*> parents; 
     
     for(auto k = fulls.begin(); k!=fulls.end(); ++k)
     {
-        Node *ptemp = (*k)->get_parent();
-        if( ptemp != NULL)
-        {
-            PQnode *p = dynamic_cast<PQnode*>(ptemp);
-            add_unique_by_depth(p, parents);
-        }
+        PQnode *p = dynamic_cast<PQnode*>((*k)->get_parent());
         //add it into the partials list by inserting it at the correct position based on decreasing depth
+        add_unique_by_depth(p, parents);
     }
     fulls.clear();
     
