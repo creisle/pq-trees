@@ -11,8 +11,8 @@
 #pragma GCC diagnostic ignored "-Wpadded"
 #pragma GCC diagnostic ignored "-Wc++11-extensions"
 
-static bool follow = false;
-static bool debug = false;
+static bool follow = true;
+static bool debug = true;
 static bool leaks = true;
 static int builtcount = 0;
 
@@ -69,6 +69,12 @@ PQnode::~PQnode()
             delete curr;
         }
     }
+}
+
+void PQnode::flip()
+{
+    children.reverse();
+    flipped = !flipped;
 }
 
 bool PQnode::less_than(Node& other)
@@ -224,12 +230,14 @@ size_t PQnode::skip_marks(std::list<Node*>::iterator &itr, marking m)
  * return:
  *      number of elements found with that marking
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-size_t PQnode::grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<Node*> &tmplist)
+size_t PQnode::grab_marks(marking m, std::list<Node*> &tmplist)
 {
     size_t count = 0;
+    auto itr = children.begin();
+    
     while(itr!=children.end())
     {
-        Node *temp = (*itr);
+        Node *temp = *itr;
         if(temp->get_mark()==m)
         {
             tmplist.push_back(temp);
@@ -246,7 +254,7 @@ size_t PQnode::grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * function: grab_marks(std::list<Node*>::iterator &itr, marking m, std::list<Node*> &tmp)
+ * function: mark()
  * input: none
  * purpose:
  *      check the children in order to mark the node
@@ -469,56 +477,60 @@ bool PQnode::reduce_proot()
     std::list<Node*> full_list; //temporary list to store directed node stuff
     
     sort_children();
-    auto it=children.begin();
     
-    size_t ecount = grab_marks(it, empty, empty_list);
     
-    if(it!=children.end()) //deal with the first partial child
-    { 
-        PQnode *ch = dynamic_cast<PQnode*>(*it);
-        if(ch&&(*it)->get_mark()==partial) //add all the children of the node lower than this one
+    size_t ecount = grab_marks(empty, empty_list);
+    
+    if(!children.empty()) //deal with the first partial child
+    {
+        PQnode *ntemp = dynamic_cast<PQnode*>(children.front());
+        if(ntemp && ntemp->get_mark()==partial) //add all the children of the node lower than this one
         {
-            if(ch->reduce(right)) // RECURSION
+            if(ntemp->reduce(right)) // RECURSION
             {
-                ch->pop_children(partials_list);
+                ntemp->pop_children(partials_list);
+                ntemp = NULL;
+                children.pop_front();
             }
             else
             {
+                empty_list.clear();
                 return false;
             }
-            it = children.erase(it);
-            delete ch;
         } 
     }
     
-    //if there is another partial node. deal with it here but pass the opposite direction
-    if(it!=children.end()) //find all the partial children
-    { 
-        PQnode *ch = dynamic_cast<PQnode*>(*it);
-        if(ch&&(*it)->get_mark()==partial) //add all the children of the node lower than this one
+    if(!children.empty()) //deal with the first partial child
+    {
+        PQnode *ntemp = dynamic_cast<PQnode*>(children.front());
+        if(ntemp && ntemp->get_mark()==partial) //add all the children of the node lower than this one
         {
-            if(ch->reduce(left)) //important! this makes the node group to the left
-            { 
-                ch->pop_children(sec_partials_list);
+            if(ntemp->reduce(left)) // RECURSION
+            {
+                ntemp->pop_children(sec_partials_list);
+                ntemp = NULL;
+                children.pop_front();
             }
             else
             {
                 return false;
             }
-            it = children.erase(it);
-            delete ch;
         }
     }
     
-    grab_marks(it, full, full_list);  
+    grab_marks(full, full_list);
     
-    children.clear();
-    children.splice(children.end(), empty_list);//add the empty nodes back (still have the same parent)
-    
-    if(debug)
+    if(!children.empty())
     {
-        cerr << "ecount = " << ecount << " pcount = " << partials_list.size() << " pcount 2 = " << sec_partials_list.size() << " fcount = " << full_list.size() << endl;
+        full_list.clear();
+        partials_list.clear();
+        sec_partials_list.clear();
+        empty_list.clear();
+        return false;
     }
+    
+    children.splice(children.end(), empty_list);//add the empty nodes back (still have the same parent)
+    empty_list.clear();
     
     if(partials_list.empty()) //no partial children
     { 
@@ -526,24 +538,19 @@ bool PQnode::reduce_proot()
         return true;
     }
     
-    if(debug){ cerr << "added the empties: " << print_expression() << endl; }
-    
     if(ecount>0) //has empty children
     {
         PQnode *qtemp = new PQnode(); //create the new qnode to house the full and partial children
         
-        for(it=partials_list.begin(); it!=partials_list.end(); ++it) //if there is another partial child, add it here
+        for(auto it=partials_list.begin(); it!=partials_list.end(); ++it) //if there is another partial child, add it here
         {
             qtemp->link_child((*it));
         }
-        
-        if(debug){ cerr << "qtemp: added the first set of partials: " << qtemp->print_expression() << endl; }
+        partials_list.clear();
         
         qtemp->link_child(group_children(full_list)); //group the full nodes into a qnode with the partials
         
-        if(debug){ cerr << "qtemp: added the fulls: " << qtemp->print_expression() << endl; }
-        
-        for(it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it) //if there is another partial child, add it here
+        for(auto it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it) //if there is another partial child, add it here
         {
             qtemp->link_child((*it));
         }
@@ -555,7 +562,7 @@ bool PQnode::reduce_proot()
         
         if(!qtemp->mark()) //need to mark the new node
         {
-            if(debug){ cerr << "unable to mark the new node: " << qtemp->print_expression(option_marking) << endl; }
+            delete qtemp;
             return false;
         }
         
@@ -564,7 +571,7 @@ bool PQnode::reduce_proot()
     }
     else //no empty children. make the subroot a qnode
     { 
-        for(it=partials_list.begin(); it!=partials_list.end(); ++it)
+        for(auto it=partials_list.begin(); it!=partials_list.end(); ++it)
         {
             link_child((*it));
         }
@@ -572,13 +579,14 @@ bool PQnode::reduce_proot()
         
         //link_child(group_children(full_list)); //group the full nodes into a qnode with the partials
         
-        for(it=full_list.begin(); it!=full_list.end(); ++it)
+        for(auto it=full_list.begin(); it!=full_list.end(); ++it)
         {
-            link_child((*it));
+           link_child((*it));
         }
+        full_list.clear();
         
         //if there is another partial child, add it here
-        for(it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it)
+        for(auto it=sec_partials_list.begin(); it!=sec_partials_list.end(); ++it)
         {
             link_child((*it));
         }
@@ -723,7 +731,7 @@ bool PQnode::reduce(direction_type dir/*right*/)
 bool PQnode::preduce(direction_type dir/*right*/)
 {
     if(follow){ cerr << "PQnode::preduce(bool direction)" << endl; }
-    
+    if(debug){ cerr << "PQnode::preduce: current node " << print_expression(option_marking) << endl; }
     //if this node is a totally full node do nothing
     if(node_mark==full)
     {
@@ -740,64 +748,110 @@ bool PQnode::preduce(direction_type dir/*right*/)
     
     sort_children();
     
-    std::list<Node*>::iterator it=children.begin();
-    grab_marks(it, empty, empty_list);
+    grab_marks(empty, empty_list);
     
-    if(it!=children.end()) //find the partial child
+    if(debug){ cerr << "after grabbing empties " << print_expression() << endl; }
+    
+    if(!children.empty()) //find the partial child
     { 
-        PQnode *ch = dynamic_cast<PQnode*>(*it);
-        if(ch&&(*it)->get_mark()==partial)
+        PQnode *ntemp = dynamic_cast<PQnode*>(children.front());
+        if(ntemp && (ntemp)->get_mark()==partial)
         {
             //recurse
             //add all the children of the node lower than this one
-            if(ch->reduce(dir))
+            if(ntemp->reduce(dir))
             {
-                Node *temp = ch->pop_child();
+                Node *temp = ntemp->pop_child();
                 while(temp!=NULL)
                 {
                     partials_list.push_back(temp);
-                    temp = ch->pop_child();
+                    temp = ntemp->pop_child();
                 }
             }else
             {
                 return false;
             }
-            it = children.erase(it);
-            delete ch;
-        } 
+            ntemp = NULL;
+            children.pop_front();
+        }
     }
     
-    grab_marks(it, full, full_list);
+    if(debug){ cerr << "after grabbing partial " << print_expression() << endl; }
     
-    if(it!=children.end())
+    grab_marks(full, full_list);
+    
+    if(debug){ cerr << "after grabbing fulls " << print_expression() << endl; }
+    
+    if(!children.empty())
     {
+        if(debug){ cerr << "incorrect format " << endl; }
+        empty_list.clear();
+        full_list.clear();
+        partials_list.clear();
         return false;
     }
     
-    children.clear(); //remove so we can add back in in the right order after the merging
+    //if there are empty children, demote full and partial into a new qnode
     
-    //printf("pcount: %zu\tfcount: %zu\tecount: %zu\n", pcount, fcount, ecount);
-    
-    //this node becomes the new parent node b/c there are no empty children
-    for(it=partials_list.begin(); it!=partials_list.end(); ++it)
+    if(empty_list.empty())
     {
-        link_child(*it);
+        cerr << "no empties\n";
+        if(dir==left)
+        {
+            for(auto it=full_list.rbegin(); it!=full_list.rend(); ++it)
+            {
+                link_child(*it);
+            }
+            full_list.clear();
+        }
+        //this node becomes the new parent node b/c there are no empty children
+        for(auto it=partials_list.begin(); it!=partials_list.end(); ++it)
+        {
+            link_child(*it);
+        }
+        partials_list.clear();
+        
+        if(dir==right)
+        {
+            for(auto it=full_list.begin(); it!=full_list.end(); ++it)
+            {
+                link_child(*it);
+            }
+            full_list.clear();
+        }
+        set_type(qnode);
+        return true;
     }
     
-    partials_list.clear();
-    link_child(group_children(full_list), dir); //now finally the full node children. again you need to group them
+    // has empty children
     
     if(dir==right)
     {
-        link_child(group_children(empty_list), left);
+        link_child(group_children(empty_list));
+        cerr << "after adding back the empties " << print_expression() << endl;
+        partials_list.splice(partials_list.end(), full_list);
+        PQnode *qtemp = dynamic_cast<PQnode*>(group_children(partials_list));
+        if(qtemp!=NULL)
+        {
+            qtemp->set_type(qnode);
+        }
+        link_child(qtemp);
+        cerr << "after adding the new qnode " << print_expression() << endl;
     }
     else
     {
-        link_child(group_children(empty_list), right);
+        partials_list.splice(partials_list.end(), full_list);
+        PQnode *qtemp = dynamic_cast<PQnode*>(group_children(partials_list));
+        if(qtemp!=nullptr)
+        {
+            qtemp->set_type(qnode);
+            qtemp->flip();
+        }
+        link_child(qtemp);
+        cerr << "after adding the new qnode " << print_expression() << endl;
+        link_child(group_children(empty_list));
+        cerr << "after adding back the empties " << print_expression() << endl;
     }
-    
-    set_type(qnode);        
-    
     return true;
 }
 
@@ -840,19 +894,17 @@ bool PQnode::qreduce(direction_type dir/*right*/)
     
     sort_children(); //should put them in e... p... f format
     
-    auto it=children.begin();
-    grab_marks(it, empty, empty_list); 
-    pcount = grab_marks(it, partial, partials_list); 
-    grab_marks(it, full, fulls_list);
+    grab_marks(empty, empty_list);
+    pcount = grab_marks(partial, partials_list);
+    grab_marks(full, fulls_list);
     
-    if(it!=children.end()||pcount>1)
+    if(!children.empty()||pcount>1)
     {
+        empty_list.clear();
+        partials_list.clear();
+        fulls_list.clear();
         return false;
     }
-    
-    children.clear();
-    
-    if(debug){ cerr << this << " after clearing children: " << print_expression(option_marking) << endl; }
     
     if(pcount==1)
     {
@@ -934,7 +986,7 @@ Node* PQnode::group_children(std::list<Node*> &group)
     else
     {
         PQnode *temp = new PQnode();
-        for(std::list<Node*>::iterator it=group.begin(); it!=group.end(); ++it)
+        for(auto it=group.begin(); it!=group.end(); ++it)
         {
             temp->link_child(*it);
         }
@@ -1037,7 +1089,11 @@ Node* PQnode::pop_child()
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 size_t PQnode::count_children()
 {
-    return children.size(); 
+    if(children.empty())
+    {
+        return 0;
+    }
+    return children.size();
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
