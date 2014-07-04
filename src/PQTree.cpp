@@ -117,7 +117,6 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in, std::list<int> 
     {
         child = new PQnode(tree_in, leaflist, v);
     }
-    //subroot->unmark();
     
     if( !replace_full_with(child, sources) )
     {

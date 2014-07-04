@@ -813,7 +813,6 @@ bool PQnode::preduce(direction_type dir/*right*/)
 bool PQnode::qreduce(direction_type dir/*right*/)
 {
     if(follow||debug){ cerr << "PQnode::qreduce(bool direction)" << endl; }
-    int t = builtcount;
     
     if(debug)
     {
@@ -841,7 +840,6 @@ bool PQnode::qreduce(direction_type dir/*right*/)
     
     sort_children(); //should put them in e... p... f format
     
-    if(t!=builtcount){ cerr << "ERROR:  qreduce; sort_children()" << endl; }
     
     auto it=children.begin();
     grab_marks(it, empty, empty_list); 
@@ -850,13 +848,10 @@ bool PQnode::qreduce(direction_type dir/*right*/)
     
     if(it!=children.end()||pcount>1)
     {
-        if(t!=builtcount){ cerr << "ERROR:  qreduce; grab_marks()" << endl; }
         return false;
     }
     
     children.clear();
-    
-    if(t!=builtcount){ cerr << "ERROR:  qreduce; clear()" << endl; }
     
     if(debug){ cerr << this << " after clearing children: " << print_expression(option_marking) << endl; }
     
@@ -935,12 +930,14 @@ if(follow){ cerr << "PQnode::group_children(std::list<Node*> group)" << builtcou
     else
     {
         PQnode *temp = new PQnode();
-        auto it = group.begin();
-        while (it!=group.end()) {
-            Node *kid = *it;
-            it = group.erase(it);
-            temp->link_child(kid);
+        
+        for(auto it = group.begin(); it!=group.end(); ++it)
+        {
+            temp->link_child(*it);
         }
+        
+        group.clear();
+        
         if(!temp->mark())
         {
             delete temp;
@@ -1015,7 +1012,6 @@ void PQnode::update_depth()
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 Node* PQnode::pop_child()
 {
-    int t = builtcount;
     if(children.empty())
     {
         return NULL;
@@ -1025,7 +1021,6 @@ Node* PQnode::pop_child()
         Node *temp = children.front();
         children.pop_front();
         temp->set_parent(NULL);
-        if(t!=builtcount){ cerr << "ERROR: pop_child() expected " << t << " found " << builtcount << endl; }
         return temp;
     }
 }
@@ -1098,7 +1093,7 @@ bool PQnode::condense_and_replace(Node *child, std::list<int>& source_list)
             break;
         }
     }
-    //now the iterator is at the item just after the last full leaf
+    //now the iterator is at the item just after the last full leaf or node
     children.insert(it, child);
     child->set_parent(this);
     child->update_depth();
@@ -1165,11 +1160,6 @@ std::string PQnode::convert_to_gml(int &id)
     int curr_id = id;
     if(type==pnode)
     {
-        /*
-        result += "template \"oreas:std:ellipse\"\n";
-        result += "label \"<html><head><meta name=\\\"qrichtext\\\" content=\\\"1\\\" /></head><body><p align=\\\"center\\\">\\\n";
-        result += "<span style=\"\\\"font-family:Tahoma;font-size:20pt;font-weight:600;color:#ff0000\\\">10</span></p></body></html>\\\"\n";
-        */
         result += "label \"P\"\n";
     }
     else

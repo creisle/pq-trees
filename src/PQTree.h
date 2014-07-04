@@ -25,6 +25,7 @@ class PQTree
 {
     private:
         int stage; //use in keeping track of printouts
+        Leaf *special_leaf;
         PQnode *root; //pointer to the root of the PQ tree
         std::list<Leaf*> leaflist; //don't need to add to the destructor since this is never "newed"
         
