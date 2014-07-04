@@ -11,9 +11,8 @@
 #pragma GCC diagnostic ignored "-Wpadded"
 #pragma GCC diagnostic ignored "-Wc++11-extensions"
 
-static bool follow = false;
+static bool follow = true;
 static bool debug = false;
-static bool leaks = true;
 static int builtcount = 0;
 
 using std::cout;
@@ -23,7 +22,7 @@ using std::cerr;
 PQnode::PQnode()
     : Node()
 {
-    if(leaks){ ++builtcount; }
+builtcount++;
     type = pnode;
     flipped = false;
 }
@@ -31,7 +30,7 @@ PQnode::PQnode()
 PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*pnode*/) //src default, nodetype def or spec
     : Node()
 {
-    if(leaks){ ++builtcount; }
+builtcount++;
     int src = -1;
     
     for(size_t i=0; i<leaves.size(); ++i)
@@ -46,7 +45,7 @@ PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, nodetype t/*
 PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, int src, nodetype t/*pnode*/) //src spec, nodetype def or spec
     : Node()
 {
-    if(leaks){ ++builtcount; }
+builtcount++;
     for(size_t i=0; i<leaves.size(); ++i)
     {
         Leaf *lf = new Leaf(this, leaves[i], leaflist, src);
@@ -58,7 +57,7 @@ PQnode::PQnode(std::vector<int> leaves, std::list<Leaf*> &leaflist, int src, nod
 
 PQnode::~PQnode()
 {
-    if(leaks){ --builtcount; }
+--builtcount;
     if(!children.empty())
     {
         auto it = children.begin();
@@ -920,7 +919,7 @@ bool PQnode::qreduce(direction_type dir/*right*/)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 Node* PQnode::group_children(std::list<Node*> &group)
 {
-    if(follow){ cerr << "PQnode::group_children(std::list<Node*> group)" << endl; }
+if(follow){ cerr << "PQnode::group_children(std::list<Node*> group)" << builtcount << endl; }
     
     Node *result = NULL;
     if(group.empty())
@@ -929,25 +928,27 @@ Node* PQnode::group_children(std::list<Node*> &group)
     }
     else if(group.size()==1)
     {
-        result = group.front();
+        Node *temp = group.front();
+        group.pop_front();
+        cerr << "group children returning the first element " << temp->print_expression() << endl;
+        return temp;
     }
     else
     {
         PQnode *temp = new PQnode();
-        for(std::list<Node*>::iterator it=group.begin(); it!=group.end(); ++it)
-        {
-            temp->link_child(*it);
+        auto it = group.begin();
+        while (it!=group.end()) {
+            Node *kid = *it;
+            it = group.erase(it);
+            temp->link_child(kid);
         }
         if(!temp->mark())
         {
-            group.clear();
             delete temp;
             return NULL;
         }
-        result = temp;
+        return temp;
     }
-    group.clear();
-    return result;
 }
 
 
@@ -960,7 +961,7 @@ Node* PQnode::group_children(std::list<Node*> &group)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool PQnode::link_child(Node *child, direction_type dir/*right*/)
 {
-    if(follow){ cerr << "PQnode::link_child(Node *child)" << endl; }
+    if(follow){ cerr << "PQnode::link_child(Node *child)" << builtcount  << endl; }
     
     if(child==NULL)
     {
@@ -1067,7 +1068,7 @@ void PQnode::set_type(nodetype t)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 bool PQnode::condense_and_replace(Node *child, std::list<int>& source_list)
 {
-    if(follow){ cerr << "PQnode::condense_and_replace(Node *child)" << endl; }
+    if(follow){ cerr << "PQnode::condense_and_replace(Node *child): #" << builtcount << endl; }
     if(child==NULL)
     {
         cerr << "ERROR condense_and_replace: cannot replace with a null" << endl;

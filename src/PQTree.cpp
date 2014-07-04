@@ -17,7 +17,7 @@
 
 static bool follow = false; //use this to find bugs. prints out function names when a function is executed
 static bool debug = false;
-static bool leaks = true;
+static bool leaks = false;
 static int buildcount = 0;
 
 static std::string string_marking[] = {"empty", "partial", "full"};
@@ -73,7 +73,7 @@ void PQTree::print()
 {
     if(root==NULL)
     {
-        printf("Empty tree\n");
+        cerr << "Empty tree" << endl;
     }else
     {
         root->print();
