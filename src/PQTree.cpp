@@ -121,6 +121,8 @@ bool PQTree::reduce_and_replace(int v, std::vector<int> tree_in, std::list<int> 
     
     if( !replace_full_with(child, sources) )
     {
+        delete child;
+        child = NULL;
         return false;
     }
     subroot->unmark();
@@ -202,11 +204,6 @@ bool PQTree::replace_full_with(Node *child, std::list<int> &sources)
     if(child==NULL){ return false; }
 
     PQnode* parent = find_full_subroot();
-    
-    if(debug)
-    {
-        cerr << "\"full\" subroot: " << parent->print_expression() << endl;
-    }
     
     if(parent==NULL){
         fprintf(stderr, "could not find the full subroot to replace\n");
@@ -441,6 +438,7 @@ Node* PQTree::build_from_expr(std::string &expr, size_t &i)
             rt->set_type(qnode);
         }else if(rt->count_children()==1)
         {
+            delete rt;
             return lf;
         }
     }

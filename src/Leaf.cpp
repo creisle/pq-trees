@@ -41,6 +41,7 @@ Leaf::~Leaf()
 {
     //follow pointer to the leaflist entry to null it's pointer
     if(leaks){ --buildcount; }
+    parent = NULL;
     if(leaf_list_ptr!=NULL)
     {
         *leaf_list_ptr = NULL;
